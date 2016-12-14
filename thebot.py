@@ -105,14 +105,14 @@ def doTheSpin(bot, update):
     if core.isPrivate(chat_id, update.message.from_user.id):
         bot.sendMessage(chat_id=update.message.chat_id, text="Я не работаю в ЛС")
         return
-    s = spinName.get(chat_id, config.defaultSpinName)
-    p = results.get(chat_id, 0)
+    s = core.fix_md(spinName.get(chat_id, config.defaultSpinName))
+    p = core.fix_md(results.get(chat_id, 0))
     if p != 0:
         bot.sendMessage(chat_id=chat_id, text=config.textAlready.format(s=s, n=p),
                         parse_mode=ParseMode.MARKDOWN,
                         reply_to_message_id=update.message.message_id)
     else:
-        p = core.chooseRandomUser(chatUsers, results, chat_id)
+        p = core.fix_md(core.chooseRandomUser(chatUsers, results, chat_id))
         from time import sleep
         for t in config.texts:
             bot.sendMessage(chat_id=chat_id, text=t.format(s=s, n=p),

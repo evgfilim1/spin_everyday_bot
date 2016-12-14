@@ -1,5 +1,5 @@
 import pickle
-from telegram import ChatMember, ParseMode
+from telegram import ChatMember, ParseMode, TelegramError
 from datetime import datetime
 from config import resetTime, botCREATOR, botTOKEN, logChannel
 
@@ -86,11 +86,14 @@ def logToChannel(bot, level: str, text: str):
     ), parse_mode=ParseMode.MARKDOWN)
 
 
-def announce(bot, chatUsers: dict, text: str):
+def announce(bot, chatUsers: dict, text: str, md: bool=False):
     for chat in chatUsers.keys():
         try:
-            bot.sendMessage(chat_id=chat, text=text, parse_mode=ParseMode.MARKDOWN)
-        except:
+            if md:
+                bot.sendMessage(chat_id=chat, text=text, parse_mode=ParseMode.MARKDOWN)
+            else:
+                bot.sendMessage(chat_id=chat, text=text)
+        except TelegramError:
             pass
 
 
@@ -99,3 +102,13 @@ def adminsRefreshLocal(canChangeSN: dict, bot, chat_id: int):
     canChangeSN[chat_id] = []
     for admin in admins:
         canChangeSN[chat_id].append(admin.user.id)
+
+
+def fix_md(text):
+    MARKDOWN_SYMBOLS = '*_`['
+    for symbol in MARKDOWN_SYMBOLS:
+        try:
+            text = text.replace(symbol, '\\' + symbol)
+        except AttributeError:
+            break
+    return text
