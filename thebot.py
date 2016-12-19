@@ -14,32 +14,32 @@ logging.basicConfig(format=LOG_FORMAT, level=logging.INFO, datefmt=TIME_FORMAT)
 # canChangeSN = {}
 # results = {}
 
-chatUsers, spinName, canChangeSN, results = core.loadAll()
+chatUsers, spinName, canChangeSN, results = core.load_all()
 
 
-def errorh(bot, update, error):
-    core.logToChannel(bot, "WARNING", "The last update caused error!\n```\n{err}\n```".
-                      format(err=error))
+def handle_error(bot, update, error):
+    core.log_to_channel(bot, "WARNING", "The last update caused error!\n```\n{err}\n```".
+                        format(err=error))
 
 
 def reset(bot, job):
     results.clear()
-    core.logToChannel(bot, "INFO", "Reset done")
+    core.log_to_channel(bot, "INFO", "Reset done")
 
 
-def autoSave(bot, job):
-    core.saveAll(chatUsers, spinName, canChangeSN, results)
+def auto_save(bot, job):
+    core.save_all(chatUsers, spinName, canChangeSN, results)
 
 
-def updateCache(bot, update):
-    msg = core.getMesg(update)
+def update_cache(bot, update):
+    msg = core.get_message(update)
     user = msg.from_user
-    if not core.isPrivate(msg.chat_id, user.id):
-        chatUsers[msg.chat_id].update({user.id: core.getuname(user)})
+    if not core.is_private(msg.chat_id, user.id):
+        chatUsers[msg.chat_id].update({user.id: core.get_name(user)})
 
 
-def adminShell(bot, update, args):
-    msg = core.getMesg(update)
+def admin_shell(bot, update, args):
+    msg = core.get_message(update)
     if msg.from_user.id == config.botCREATOR:
         try:
             cmd = args.pop(0)
@@ -57,13 +57,13 @@ def adminShell(bot, update, args):
         return
 
 
-def svcHandler(bot, update):
+def svc_handler(bot, update):
     chat_id = update.message.chat_id
     to_id = update.message.migrate_to_chat_id
     if update.message.group_chat_created or \
             (bool(update.message.new_chat_member) and update.message.new_chat_member.id == core.botID):
         chatUsers[chat_id] = {}
-        core.adminsRefreshLocal(canChangeSN, bot, chat_id)
+        core.admins_refresh(canChangeSN, bot, chat_id)
     elif to_id != 0:
         chatUsers.update({to_id: chatUsers.get(chat_id)})
         chatUsers.pop(chat_id)
@@ -85,34 +85,34 @@ def helper(bot, update):
                     reply_to_message_id=update.message.message_id)
 
 
-def adminRefresh(bot, update):
-    if core.isPrivate(update.message.chat_id, update.message.from_user.id):
+def admin_refresh(bot, update):
+    if core.is_private(update.message.chat_id, update.message.from_user.id):
         bot.sendMessage(chat_id=update.message.chat_id, text="Я не работаю в ЛС")
         return
-    core.adminsRefreshLocal(canChangeSN, bot, update.message.chat_id)
+    core.admins_refresh(canChangeSN, bot, update.message.chat_id)
     bot.sendMessage(chat_id=update.message.chat_id, text="Список админов обновлён",
                     reply_to_message_id=update.message.message_id)
 
 
-def pingas(bot, update):
+def ping(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id, text="Ping? Pong!",
                     reply_to_message_id=update.message.message_id)
 
 
 @run_async
-def doTheSpin(bot, update):
+def do_the_spin(bot, update):
     chat_id = update.message.chat_id
-    if core.isPrivate(chat_id, update.message.from_user.id):
+    if core.is_private(chat_id, update.message.from_user.id):
         bot.sendMessage(chat_id=update.message.chat_id, text="Я не работаю в ЛС")
         return
     s = core.fix_md(spinName.get(chat_id, config.defaultSpinName))
-    p = core.fix_md(results.get(chat_id, 0))
+    p = results.get(chat_id, 0)
     if p != 0:
         bot.sendMessage(chat_id=chat_id, text=config.textAlready.format(s=s, n=p),
                         parse_mode=ParseMode.MARKDOWN,
                         reply_to_message_id=update.message.message_id)
     else:
-        p = core.fix_md(core.chooseRandomUser(chatUsers, results, chat_id))
+        p = core.fix_md(core.choose_random_user(chatUsers, results, chat_id))
         from time import sleep
         for t in config.texts:
             bot.sendMessage(chat_id=chat_id, text=t.format(s=s, n=p),
@@ -120,14 +120,14 @@ def doTheSpin(bot, update):
             sleep(2)
 
 
-def changeSpinName(bot, update, args):
-    msg = core.getMesg(update)
+def change_spin_name(bot, update, args):
+    msg = core.get_message(update)
 
-    if core.isPrivate(msg.chat_id, msg.from_user.id):
+    if core.is_private(msg.chat_id, msg.from_user.id):
         bot.sendMessage(chat_id=msg.chat_id, text="Я не работаю в ЛС")
         return
 
-    if core.ifCanChangeSN(canChangeSN, msg.chat_id, msg.from_user.id):
+    if core.can_change_name(canChangeSN, msg.chat_id, msg.from_user.id):
         spin_name = " ".join(args)
         if spin_name == "":
             spin_name = config.defaultSpinName
@@ -139,8 +139,8 @@ def changeSpinName(bot, update, args):
         return
 
 
-def spinCount(bot, update):
-    if core.isPrivate(update.message.chat_id, update.message.from_user.id):
+def spin_count(bot, update):
+    if core.is_private(update.message.chat_id, update.message.from_user.id):
         bot.sendMessage(chat_id=update.message.chat_id, text="Я не работаю в ЛС")
         return
     bot.sendMessage(chat_id=update.message.chat_id,
@@ -153,28 +153,28 @@ def spinCount(bot, update):
 updater = Updater(config.botTOKEN, workers=8)
 
 jobs = updater.job_queue
-jobs.put(Job(autoSave, 60.0))
-jobs.put(Job(reset, 86400.0), next_t=core.timediff())
+jobs.put(Job(auto_save, 60.0))
+jobs.put(Job(reset, 86400.0), next_t=core.time_diff())
 
 dp = updater.dispatcher
 
 dp.add_handler(CommandHandler('start', helper))
 dp.add_handler(CommandHandler('help', helper))
-dp.add_handler(CommandHandler('adminF5sn', adminRefresh))
-dp.add_handler(CommandHandler('sudo', adminShell, pass_args=True, allow_edited=True))
-dp.add_handler(CommandHandler('pingsn', pingas))
-dp.add_handler(CommandHandler('setsn', changeSpinName, pass_args=True, allow_edited=True))
-dp.add_handler(CommandHandler('countsn', spinCount))
-dp.add_handler(CommandHandler('spinsn', doTheSpin))
-dp.add_handler(MessageHandler(Filters.status_update, svcHandler))
-dp.add_handler(MessageHandler(Filters.all, updateCache, allow_edited=True))
+dp.add_handler(CommandHandler('adminF5sn', admin_refresh))
+dp.add_handler(CommandHandler('sudo', admin_shell, pass_args=True, allow_edited=True))
+dp.add_handler(CommandHandler('pingsn', ping))
+dp.add_handler(CommandHandler('setsn', change_spin_name, pass_args=True, allow_edited=True))
+dp.add_handler(CommandHandler('countsn', spin_count))
+dp.add_handler(CommandHandler('spinsn', do_the_spin))
+dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
+dp.add_handler(MessageHandler(Filters.all, update_cache, allow_edited=True))
 
-dp.add_error_handler(errorh)
+dp.add_error_handler(handle_error)
 
-core.logToChannel(updater.bot, "INFO", "Bot started")
+core.log_to_channel(updater.bot, "INFO", "Bot started")
 
 updater.start_polling()
 updater.idle()
 
-core.saveAll(chatUsers, spinName, canChangeSN, results)
-core.logToChannel(updater.bot, "INFO", "Bot stopped")
+core.save_all(chatUsers, spinName, canChangeSN, results)
+core.log_to_channel(updater.bot, "INFO", "Bot stopped")

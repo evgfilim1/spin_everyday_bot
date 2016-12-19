@@ -6,7 +6,7 @@ from config import resetTime, botCREATOR, botTOKEN, logChannel
 botID = int(botTOKEN[:botTOKEN.index(":")])
 
 
-def getuname(user) -> str:
+def get_name(user) -> str:
     if bool(user.username):
         return '@' + user.username
     else:
@@ -23,24 +23,24 @@ def saver(obj, filename: str):
         pickle.dump(obj, ff, pickle.HIGHEST_PROTOCOL)
 
 
-def loadAll():
+def load_all():
     if not __import__("os").path.exists("users.pkl"):
         return {}, {}, {}, {}
-    chatUsers = loader("users.pkl")
-    spinName = loader("spin.pkl")
-    canChangeSN = loader("changers.pkl")
+    chat_users = loader("users.pkl")
+    spin_name = loader("spin.pkl")
+    can_change_spin_name = loader("changers.pkl")
     results = loader("results.pkl")
-    return chatUsers, spinName, canChangeSN, results
+    return chat_users, spin_name, can_change_spin_name, results
 
 
-def saveAll(chatUsers: dict, spinName: dict, canChangeSN: dict, results: dict):
-    saver(chatUsers, "users.pkl")
-    saver(spinName, "spin.pkl")
-    saver(canChangeSN, "changers.pkl")
+def save_all(chat_users: dict, spin_name: dict, can_change_spin_name: dict, results: dict):
+    saver(chat_users, "users.pkl")
+    saver(spin_name, "spin.pkl")
+    saver(can_change_spin_name, "changers.pkl")
     saver(results, "results.pkl")
 
 
-def isUserLeft(chat_user) -> bool:
+def is_user_left(chat_user) -> bool:
     if chat_user.status == ChatMember.LEFT or \
                     chat_user.status == ChatMember.KICKED:
         return True
@@ -48,11 +48,13 @@ def isUserLeft(chat_user) -> bool:
         return False
 
 
-def isPrivate(chat_id: int, user_id: int) -> bool:
-    return chat_id == user_id
+def is_private(chat_id: int, user_id: int=0) -> bool:
+    if user_id != 0:
+        print("WARNING: 'user_id' is deprecated, it will be removed soon")
+    return chat_id > 0
 
 
-def timediff() -> float:
+def time_diff() -> float:
     t = resetTime.split(':')
     now = datetime.now()
     then = datetime(2016, 1, 1, int(t[0]), int(t[1]))
@@ -61,33 +63,33 @@ def timediff() -> float:
     return delta
 
 
-def getMesg(update):
+def get_message(update):
     if bool(update.edited_message):
         return update.edited_message
     else:
         return update.message
 
 
-def chooseRandomUser(chatUsers: dict, results: dict, chat_id: int) -> str:
+def choose_random_user(chat_users: dict, results: dict, chat_id: int) -> str:
     from random import choice
-    user = choice(list(chatUsers[chat_id].items()))
+    user = choice(list(chat_users[chat_id].items()))
     user = user[1]
     results.update({chat_id: user})
     return user
 
 
-def ifCanChangeSN(canChangeSN: dict, chat_id: int, user_id: int) -> bool:
-    return user_id in canChangeSN[chat_id] or user_id == botCREATOR
+def can_change_name(can_change_spin_name: dict, chat_id: int, user_id: int) -> bool:
+    return user_id in can_change_spin_name[chat_id] or user_id == botCREATOR
 
 
-def logToChannel(bot, level: str, text: str):
+def log_to_channel(bot, level: str, text: str):
     bot.sendMessage(chat_id=logChannel, text="{lvl}:\n{txt}\n\n{time}".format(
         lvl=level, txt=text, time=datetime.now()
     ), parse_mode=ParseMode.MARKDOWN)
 
 
-def announce(bot, chatUsers: dict, text: str, md: bool=False):
-    for chat in chatUsers.keys():
+def announce(bot, chat_users: dict, text: str, md: bool=False):
+    for chat in chat_users.keys():
         try:
             if md:
                 bot.sendMessage(chat_id=chat, text=text, parse_mode=ParseMode.MARKDOWN)
@@ -97,16 +99,16 @@ def announce(bot, chatUsers: dict, text: str, md: bool=False):
             pass
 
 
-def adminsRefreshLocal(canChangeSN: dict, bot, chat_id: int):
+def admins_refresh(can_change_spin_name: dict, bot, chat_id: int):
     admins = bot.getChatAdministrators(chat_id=chat_id)
-    canChangeSN[chat_id] = []
+    can_change_spin_name[chat_id] = []
     for admin in admins:
-        canChangeSN[chat_id].append(admin.user.id)
+        can_change_spin_name[chat_id].append(admin.user.id)
 
 
 def fix_md(text):
-    MARKDOWN_SYMBOLS = '*_`['
-    for symbol in MARKDOWN_SYMBOLS:
+    md_symbols = '*_`['
+    for symbol in md_symbols:
         try:
             text = text.replace(symbol, '\\' + symbol)
         except AttributeError:
