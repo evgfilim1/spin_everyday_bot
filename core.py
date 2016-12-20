@@ -4,16 +4,16 @@ from datetime import datetime
 from telegram import ChatMember, ParseMode, TelegramError
 from telegram import User, Update, Message, Bot
 
-from config import resetTime, botCREATOR, botTOKEN, logChannel
+from config import resetTime, botCREATOR, logChannel
 
-botID = int(botTOKEN[:botTOKEN.index(":")])
+# botID = int(botTOKEN[:botTOKEN.index(":")])  # deprecated
 
 
 def check_destination(bot_name: str, message_text: str) -> bool:
     msg = message_text.split()
     msg = msg[0].split('@')
     msg.append('')
-    return msg[1] == bot_name
+    return msg[1] == bot_name or msg[1] == ''
 
 
 def get_name(user: User) -> str:

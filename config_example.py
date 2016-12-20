@@ -35,3 +35,6 @@ resetTime = "0:00"
 
 # Logging channel. You can put here "@telegramChannelName" or channel's ID
 logChannel = ""
+
+# Message that will be shown in group chats if the bot can't write in PM
+pmOnlyMessage = "Для начала, запусти или разбань меня в ЛС"
