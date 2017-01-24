@@ -14,8 +14,29 @@ def _check_destination(bot_name: str, message_text: str) -> bool:
     return msg[1] == bot_name or msg[1] == ''
 
 
-def _is_private(chat_id: int) -> bool:
+def is_private(chat_id: int) -> bool:
     return chat_id > 0
+
+
+def not_pm(function: callable):
+    def wrapper(bot: Bot, update: Update, *args, **kwargs):
+        msg = get_message(update)
+        if is_private(msg.chat_id):
+            msg.reply_text("Эта команда недоступна в ЛС")
+            return
+        function(bot, update, *args, **kwargs)
+
+    return wrapper
+
+
+def check_destination(function: callable):
+    def wrapper(bot: Bot, update: Update, *args, **kwargs):
+        msg = get_message(update)
+        if not _check_destination(bot.username, msg.text):
+            return
+        function(bot, update, *args, **kwargs)
+
+    return wrapper
 
 
 def get_name(user: User) -> str:
@@ -70,10 +91,11 @@ def time_diff() -> float:
 
 
 def get_message(update: Update) -> Message:
-    if bool(update.edited_message):
-        return update.edited_message
-    else:
-        return update.message
+    # if bool(update.edited_message):
+    #     return update.edited_message
+    # else:
+    #     return update.message
+    return update.message or update.edited_message
 
 
 def choose_random_user(chat_users: dict, results: dict, chat_id: int) -> str:

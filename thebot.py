@@ -39,14 +39,14 @@ def auto_save(bot: Bot, job: Job):
 def update_cache(bot: Bot, update: Update):
     msg = core.get_message(update)
     user = msg.from_user
-    if not core._is_private(msg.chat_id):
+    if not core.is_private(msg.chat_id):
         chatUsers[msg.chat_id].update({user.id: core.get_name(user)})
 
 
+@core.check_destination
 def admin_shell(bot: Bot, update: Update, args: list):
     msg = core.get_message(update)
-    if msg.from_user.id == config.BOT_CREATOR and \
-            core._check_destination(bot.username, msg.text):
+    if msg.from_user.id == config.BOT_CREATOR:
         try:
             cmd = args.pop(0)
         except IndexError:
@@ -86,42 +86,35 @@ def svc_handler(bot: Bot, update: Update):
         results.pop(chat_id)
 
 
+@core.check_destination
 def helper(bot: Bot, update: Update):
-    if core._check_destination(bot.username, update.message.text):
-        try:
-            bot.sendMessage(chat_id=update.message.from_user.id, text=config.HELP_TEXT,
-                            parse_mode=ParseMode.MARKDOWN)
-        except TelegramError:
-            bot.sendMessage(chat_id=update.message.chat_id, text=config.PM_ONLY_MESSAGE,
-                            reply_markup=StartKeyboard, reply_to_message_id=update.message.message_id)
+    try:
+        bot.sendMessage(chat_id=update.message.from_user.id, text=config.HELP_TEXT,
+                        parse_mode=ParseMode.MARKDOWN)
+    except TelegramError:
+        bot.sendMessage(chat_id=update.message.chat_id, text=config.PM_ONLY_MESSAGE,
+                        reply_markup=StartKeyboard, reply_to_message_id=update.message.message_id)
 
 
+@core.not_pm
+@core.check_destination
 def admin_refresh(bot: Bot, update: Update):
-    if core._is_private(update.message.chat_id):
-        bot.sendMessage(chat_id=update.message.chat_id, text="Я не работаю в ЛС")
-        return
-    if not core._check_destination(bot.username, update.message.text):
-        return
     core.admins_refresh(canChangeSN, bot, update.message.chat_id)
     bot.sendMessage(chat_id=update.message.chat_id, text="Список админов обновлён",
                     reply_to_message_id=update.message.message_id)
 
 
+@core.check_destination
 def ping(bot: Bot, update: Update):
-    if not core._check_destination(bot.username, update.message.text):
-        return
     bot.sendMessage(chat_id=update.message.chat_id, text="Ping? Pong!",
                     reply_to_message_id=update.message.message_id)
 
 
 @run_async
+@core.not_pm
+@core.check_destination
 def do_the_spin(bot: Bot, update: Update):
     chat_id = update.message.chat_id
-    if core._is_private(chat_id):
-        bot.sendMessage(chat_id=update.message.chat_id, text="Я не работаю в ЛС")
-        return
-    if not core._check_destination(bot.username, update.message.text):
-        return
     s = core.fix_md(spinName.get(chat_id, config.DEFAULT_SPIN_NAME))
     p = results.get(chat_id, 0)
     if p != 0:
@@ -137,16 +130,10 @@ def do_the_spin(bot: Bot, update: Update):
             sleep(2)
 
 
+@core.not_pm
+@core.check_destination
 def change_spin_name(bot: Bot, update: Update, args: list):
     msg = core.get_message(update)
-
-    if core._is_private(msg.chat_id):
-        bot.sendMessage(chat_id=msg.chat_id, text="Я не работаю в ЛС")
-        return
-
-    if not core._check_destination(bot.username, msg.text):
-        return
-
     if core.can_change_name(canChangeSN, msg.chat_id, msg.from_user.id):
         spin_name = " ".join(args)
         if spin_name == "":
@@ -158,12 +145,9 @@ def change_spin_name(bot: Bot, update: Update, args: list):
         return
 
 
+@core.not_pm
+@core.check_destination
 def spin_count(bot: Bot, update: Update):
-    if core._is_private(update.message.chat_id):
-        bot.sendMessage(chat_id=update.message.chat_id, text="Я не работаю в ЛС")
-        return
-    if not core._check_destination(bot.username, update.message.text):
-        return
     bot.sendMessage(chat_id=update.message.chat_id,
                     text="Кол-во людей, участвующих в розыгрыше: _{}_".format(
                         len(chatUsers[update.message.chat_id])
