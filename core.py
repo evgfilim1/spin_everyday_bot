@@ -4,16 +4,18 @@ from datetime import datetime
 from telegram import ChatMember, ParseMode, TelegramError
 from telegram import User, Update, Message, Bot
 
-from config import resetTime, botCREATOR, logChannel
-
-# botID = int(botTOKEN[:botTOKEN.index(":")])  # deprecated
+from config import RESET_TIME, BOT_CREATOR, LOG_CHANNEL
 
 
-def check_destination(bot_name: str, message_text: str) -> bool:
+def _check_destination(bot_name: str, message_text: str) -> bool:
     msg = message_text.split()
     msg = msg[0].split('@')
     msg.append('')
     return msg[1] == bot_name or msg[1] == ''
+
+
+def _is_private(chat_id: int) -> bool:
+    return chat_id > 0
 
 
 def get_name(user: User) -> str:
@@ -23,12 +25,12 @@ def get_name(user: User) -> str:
         return user.first_name
 
 
-def loader(filename: str) -> dict:
+def load(filename: str) -> dict:
     with open(filename, 'rb') as ff:
         return pickle.load(ff)
 
 
-def saver(obj: dict, filename: str):
+def save(obj: dict, filename: str):
     with open(filename, 'wb') as ff:
         pickle.dump(obj, ff, pickle.HIGHEST_PROTOCOL)
 
@@ -36,18 +38,18 @@ def saver(obj: dict, filename: str):
 def load_all() -> (dict, dict, dict, dict):
     if not __import__("os").path.exists("users.pkl"):
         return {}, {}, {}, {}
-    chat_users = loader("users.pkl")
-    spin_name = loader("spin.pkl")
-    can_change_spin_name = loader("changers.pkl")
-    results = loader("results.pkl")
+    chat_users = load("users.pkl")
+    spin_name = load("spin.pkl")
+    can_change_spin_name = load("changers.pkl")
+    results = load("results.pkl")
     return chat_users, spin_name, can_change_spin_name, results
 
 
 def save_all(chat_users: dict, spin_name: dict, can_change_spin_name: dict, results: dict):
-    saver(chat_users, "users.pkl")
-    saver(spin_name, "spin.pkl")
-    saver(can_change_spin_name, "changers.pkl")
-    saver(results, "results.pkl")
+    save(chat_users, "users.pkl")
+    save(spin_name, "spin.pkl")
+    save(can_change_spin_name, "changers.pkl")
+    save(results, "results.pkl")
 
 
 def is_user_left(chat_user: ChatMember) -> bool:
@@ -58,14 +60,8 @@ def is_user_left(chat_user: ChatMember) -> bool:
         return False
 
 
-def is_private(chat_id: int, user_id: int = None) -> bool:
-    if user_id is not None:
-        print("WARNING: 'user_id' is deprecated, it will be removed soon")
-    return chat_id > 0
-
-
 def time_diff() -> float:
-    t = resetTime.split(':')
+    t = RESET_TIME.split(':')
     now = datetime.now()
     then = datetime(2016, 1, 1, int(t[0]), int(t[1]))
     diff = then - now
@@ -89,16 +85,16 @@ def choose_random_user(chat_users: dict, results: dict, chat_id: int) -> str:
 
 
 def can_change_name(can_change_spin_name: dict, chat_id: int, user_id: int) -> bool:
-    return user_id in can_change_spin_name[chat_id] or user_id == botCREATOR
+    return user_id in can_change_spin_name[chat_id] or user_id == BOT_CREATOR
 
 
 def log_to_channel(bot: Bot, level: str, text: str):
-    bot.sendMessage(chat_id=logChannel, text="{lvl}:\n{txt}\n\n{time}".format(
+    bot.sendMessage(chat_id=LOG_CHANNEL, text="{lvl}:\n{txt}\n\n{time}".format(
         lvl=level, txt=text, time=datetime.now()
     ), parse_mode=ParseMode.MARKDOWN)
 
 
-def announce(bot: Bot, chat_users: dict, text: str, md: bool = False):
+def announce(bot: Bot, chat_users: dict, text: str, md: bool=False):
     for chat in chat_users.keys():
         try:
             if md:

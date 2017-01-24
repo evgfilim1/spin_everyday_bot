@@ -1,7 +1,8 @@
 import logging
 
-from telegram import *
-from telegram.ext import *
+from telegram import (Bot, Update, ParseMode, TelegramError,
+                      InlineKeyboardMarkup, InlineKeyboardButton)
+from telegram.ext import Updater, Job, CommandHandler, MessageHandler, Filters
 from telegram.ext.dispatcher import run_async
 
 import config
@@ -11,17 +12,19 @@ TIME_FORMAT = "%d %b, %H:%M:%S"
 LOG_FORMAT = '%(levelname)-8s [%(asctime)s] %(message)s'
 logging.basicConfig(format=LOG_FORMAT, level=logging.INFO, datefmt=TIME_FORMAT)
 
-# chatUsers = {}
-# spinName = {}
-# canChangeSN = {}
-# results = {}
+updater = Updater(config.BOT_TOKEN, workers=8)
+jobs = updater.job_queue
+dp = updater.dispatcher
+
+StartKeyboard = InlineKeyboardMarkup([
+    [InlineKeyboardButton(text="Написать боту", url="telegram.me/{}".format(updater.bot.username))]
+])
 
 chatUsers, spinName, canChangeSN, results = core.load_all()
 
 
 def handle_error(bot: Bot, update: Update, error):
-    core.log_to_channel(bot, "WARNING", "The last update caused error!\n```\n{err}\n```".
-                        format(err=error))
+    core.log_to_channel(bot, "WARNING", f"The last update caused error!\n```\n{error}\n```")
 
 
 def reset(bot: Bot, job: Job=None):
@@ -36,20 +39,20 @@ def auto_save(bot: Bot, job: Job):
 def update_cache(bot: Bot, update: Update):
     msg = core.get_message(update)
     user = msg.from_user
-    if not core.is_private(msg.chat_id):
+    if not core._is_private(msg.chat_id):
         chatUsers[msg.chat_id].update({user.id: core.get_name(user)})
 
 
 def admin_shell(bot: Bot, update: Update, args: list):
     msg = core.get_message(update)
-    if msg.from_user.id == config.botCREATOR and \
-            core.check_destination(bot.username, msg.text):
+    if msg.from_user.id == config.BOT_CREATOR and \
+            core._check_destination(bot.username, msg.text):
         try:
             cmd = args.pop(0)
         except IndexError:
             return
         if cmd == "exec":
-            eval(" ".join(args))
+            exec(" ".join(args))
         elif cmd == "vardump":
             bot.sendMessage(chat_id=msg.chat_id, text="```\n{}\n```".format(
                 eval(" ".join(args))
@@ -84,20 +87,20 @@ def svc_handler(bot: Bot, update: Update):
 
 
 def helper(bot: Bot, update: Update):
-    if core.check_destination(bot.username, update.message.text):
+    if core._check_destination(bot.username, update.message.text):
         try:
-            bot.sendMessage(chat_id=update.message.from_user.id, text=config.helpText,
+            bot.sendMessage(chat_id=update.message.from_user.id, text=config.HELP_TEXT,
                             parse_mode=ParseMode.MARKDOWN)
         except TelegramError:
-            bot.sendMessage(chat_id=update.message.chat_id, text=config.pmOnlyMessage,
+            bot.sendMessage(chat_id=update.message.chat_id, text=config.PM_ONLY_MESSAGE,
                             reply_markup=StartKeyboard, reply_to_message_id=update.message.message_id)
 
 
 def admin_refresh(bot: Bot, update: Update):
-    if core.is_private(update.message.chat_id):
+    if core._is_private(update.message.chat_id):
         bot.sendMessage(chat_id=update.message.chat_id, text="Я не работаю в ЛС")
         return
-    if not core.check_destination(bot.username, update.message.text):
+    if not core._check_destination(bot.username, update.message.text):
         return
     core.admins_refresh(canChangeSN, bot, update.message.chat_id)
     bot.sendMessage(chat_id=update.message.chat_id, text="Список админов обновлён",
@@ -105,7 +108,7 @@ def admin_refresh(bot: Bot, update: Update):
 
 
 def ping(bot: Bot, update: Update):
-    if not core.check_destination(bot.username, update.message.text):
+    if not core._check_destination(bot.username, update.message.text):
         return
     bot.sendMessage(chat_id=update.message.chat_id, text="Ping? Pong!",
                     reply_to_message_id=update.message.message_id)
@@ -114,21 +117,21 @@ def ping(bot: Bot, update: Update):
 @run_async
 def do_the_spin(bot: Bot, update: Update):
     chat_id = update.message.chat_id
-    if core.is_private(chat_id):
+    if core._is_private(chat_id):
         bot.sendMessage(chat_id=update.message.chat_id, text="Я не работаю в ЛС")
         return
-    if not core.check_destination(bot.username, update.message.text):
+    if not core._check_destination(bot.username, update.message.text):
         return
-    s = core.fix_md(spinName.get(chat_id, config.defaultSpinName))
+    s = core.fix_md(spinName.get(chat_id, config.DEFAULT_SPIN_NAME))
     p = results.get(chat_id, 0)
     if p != 0:
-        bot.sendMessage(chat_id=chat_id, text=config.textAlready.format(s=s, n=p),
+        bot.sendMessage(chat_id=chat_id, text=config.TEXT_ALREADY.format(s=s, n=p),
                         parse_mode=ParseMode.MARKDOWN,
                         reply_to_message_id=update.message.message_id)
     else:
         p = core.fix_md(core.choose_random_user(chatUsers, results, chat_id))
         from time import sleep
-        for t in config.texts:
+        for t in config.TEXTS:
             bot.sendMessage(chat_id=chat_id, text=t.format(s=s, n=p),
                             parse_mode=ParseMode.MARKDOWN)
             sleep(2)
@@ -137,30 +140,29 @@ def do_the_spin(bot: Bot, update: Update):
 def change_spin_name(bot: Bot, update: Update, args: list):
     msg = core.get_message(update)
 
-    if core.is_private(msg.chat_id):
+    if core._is_private(msg.chat_id):
         bot.sendMessage(chat_id=msg.chat_id, text="Я не работаю в ЛС")
         return
 
-    if not core.check_destination(bot.username, msg.text):
+    if not core._check_destination(bot.username, msg.text):
         return
 
     if core.can_change_name(canChangeSN, msg.chat_id, msg.from_user.id):
         spin_name = " ".join(args)
         if spin_name == "":
-            spin_name = config.defaultSpinName
+            spin_name = config.DEFAULT_SPIN_NAME
         spinName[msg.chat_id] = spin_name
-        bot.sendMessage(chat_id=msg.chat_id, text="Текст розыгрыша изменён на *{} дня*".
-                        format(spin_name), reply_to_message_id=msg.message_id,
-                        parse_mode=ParseMode.MARKDOWN)
+        bot.sendMessage(chat_id=msg.chat_id, text=f"Текст розыгрыша изменён на *{spin_name} дня*",
+                        reply_to_message_id=msg.message_id, parse_mode=ParseMode.MARKDOWN)
     else:
         return
 
 
 def spin_count(bot: Bot, update: Update):
-    if core.is_private(update.message.chat_id):
+    if core._is_private(update.message.chat_id):
         bot.sendMessage(chat_id=update.message.chat_id, text="Я не работаю в ЛС")
         return
-    if not core.check_destination(bot.username, update.message.text):
+    if not core._check_destination(bot.username, update.message.text):
         return
     bot.sendMessage(chat_id=update.message.chat_id,
                     text="Кол-во людей, участвующих в розыгрыше: _{}_".format(
@@ -169,17 +171,8 @@ def spin_count(bot: Bot, update: Update):
                     parse_mode=ParseMode.MARKDOWN)
 
 
-updater = Updater(config.botTOKEN, workers=8)
-
-jobs = updater.job_queue
 jobs.put(Job(auto_save, 60.0))
 jobs.put(Job(reset, 86400.0), next_t=core.time_diff())
-
-StartKeyboard = InlineKeyboardMarkup([
-    [InlineKeyboardButton(text="Написать боту", url="telegram.me/{}".format(updater.bot.username))]
-])
-
-dp = updater.dispatcher
 
 dp.add_handler(CommandHandler('start', helper))
 dp.add_handler(CommandHandler('help', helper))
