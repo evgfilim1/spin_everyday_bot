@@ -109,11 +109,19 @@ def get_message(update: Update) -> Message:
     return update.message or update.edited_message
 
 
-def choose_random_user(chat_users: dict, results: dict, chat_id: int) -> str:
+def choose_random_user(chat_users: dict, results: dict, chat_id: int, bot: Bot) -> str:
     from random import choice
-    user = choice(list(chat_users[chat_id].items()))
-    user = user[1]
+    user = choice(list(chat_users[chat_id].items()))    # Getting tuple (user_id, username)
+    try:
+        member = bot.get_chat_member(chat_id=chat_id, user_id=user[0])
+        if is_user_left(member):
+            raise TelegramError("User left the group")
+    except TelegramError:
+        chat_users[chat_id].pop(user[0])
+        return choose_random_user(chat_users, results, chat_id, bot)
+    user = get_name(member.user)
     results.update({chat_id: user})
+    chat_users[chat_id].update({member.user.id: user})
     return user
 
 

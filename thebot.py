@@ -71,6 +71,10 @@ def svc_handler(bot: Bot, update: Update):
     if update.message.group_chat_created or (bool(new_member) and new_member.id == bot.id):
         chat_users[chat_id] = {}
         core.admins_refresh(can_change_name, bot, chat_id)
+    elif bool(new_member):
+        if bool(new_member.username) and new_member.username[-3:] == "bot":
+            return
+        chat_users[chat_id].update({new_member.id: core.get_name(new_member)})
     elif migrate_to_id != 0:
         chat_users.update({migrate_to_id: chat_users.get(chat_id)})
         spin_name.update({migrate_to_id: spin_name.get(chat_id)})
@@ -79,6 +83,8 @@ def svc_handler(bot: Bot, update: Update):
         core.clear_data(chat_id, chat_users, spin_name, can_change_name, results)
     elif bool(left_member) and left_member.id == bot.id:
         core.clear_data(chat_id, chat_users, spin_name, can_change_name, results)
+    elif bool(left_member):
+        chat_users[chat_id].pop(left_member.id)
 
 
 @core.check_destination
@@ -113,7 +119,7 @@ def do_the_spin(bot: Bot, update: Update):
         bot.send_message(chat_id=chat_id, text=config.TEXT_ALREADY.format(s=s, n=p),
                          parse_mode=ParseMode.MARKDOWN)
     else:
-        p = core.fix_md(core.choose_random_user(chat_users, results, chat_id))
+        p = core.fix_md(core.choose_random_user(chat_users, results, chat_id, bot))
         from time import sleep
         curr_text = choice(config.TEXTS)
         for t in curr_text:
