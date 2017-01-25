@@ -74,11 +74,8 @@ def save_all(chat_users: dict, spin_name: dict, can_change_spin_name: dict, resu
 
 
 def is_user_left(chat_user: ChatMember) -> bool:
-    if chat_user.status == ChatMember.LEFT or \
-                    chat_user.status == ChatMember.KICKED:
-        return True
-    else:
-        return False
+    return chat_user.status == ChatMember.LEFT or \
+           chat_user.status == ChatMember.KICKED
 
 
 def time_diff() -> float:
@@ -91,10 +88,6 @@ def time_diff() -> float:
 
 
 def get_message(update: Update) -> Message:
-    # if bool(update.edited_message):
-    #     return update.edited_message
-    # else:
-    #     return update.message
     return update.message or update.edited_message
 
 
@@ -111,7 +104,7 @@ def can_change_name(can_change_spin_name: dict, chat_id: int, user_id: int) -> b
 
 
 def log_to_channel(bot: Bot, level: str, text: str):
-    bot.sendMessage(chat_id=LOG_CHANNEL, text="{lvl}:\n{txt}\n\n{time}".format(
+    bot.send_message(chat_id=LOG_CHANNEL, text="{lvl}:\n{txt}\n\n{time}".format(
         lvl=level, txt=text, time=datetime.now()
     ), parse_mode=ParseMode.MARKDOWN)
 
@@ -120,15 +113,15 @@ def announce(bot: Bot, chat_users: dict, text: str, md: bool=False):
     for chat in chat_users.keys():
         try:
             if md:
-                bot.sendMessage(chat_id=chat, text=text, parse_mode=ParseMode.MARKDOWN)
+                bot.send_message(chat_id=chat, text=text, parse_mode=ParseMode.MARKDOWN)
             else:
-                bot.sendMessage(chat_id=chat, text=text)
+                bot.send_message(chat_id=chat, text=text)
         except TelegramError:
             pass
 
 
 def admins_refresh(can_change_spin_name: dict, bot: Bot, chat_id: int):
-    admins = bot.getChatAdministrators(chat_id=chat_id)
+    admins = bot.get_chat_administrators(chat_id=chat_id)
     can_change_spin_name[chat_id] = []
     for admin in admins:
         can_change_spin_name[chat_id].append(admin.user.id)

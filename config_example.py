@@ -9,12 +9,16 @@ BOT_TOKEN = "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi"
 BOT_CREATOR = 123456987
 
 # Default name of spin
-DEFAULT_SPIN_NAME = "победитель"
+DEFAULT_SPIN_NAME = "ноунейм"
 
 # Spin texts
 # {s} is replaced with name of spin and {n} -- with user name
-TEXTS = ["Итак, кто же сегодня *{s} дня*?", "_Хмм, интересно..._", "*АГА!*",
-         "Сегодня ты *{s} дня,* {n}"]
+TEXTS = [["Итак, кто же сегодня *{s} дня*?", "_Хмм, интересно..._", "*АГА!*",
+         "Сегодня ты *{s} дня,* {n}"],
+         ["*Колесо сансары запущено!*", "_Что за дичь?!_", "Ну ок...",
+          "Поздравляю, ты *{s} дня,* {n}"],
+         ["Кручу-верчу, *наебать* хочу", "Сегодня ты *{s} дня*, @spin\_everyday\_bot",
+          "_(нет)_", "На самом деле, это {n}"]]
 
 # Text that shows if spin was done already
 TEXT_ALREADY = "Согласно сегодняшнему розыгрышу, *{s} дня* -- `{n}`"
