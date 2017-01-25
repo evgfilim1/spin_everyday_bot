@@ -18,7 +18,7 @@ updater = Updater(config.BOT_TOKEN, workers=8)
 jobs = updater.job_queue
 dp = updater.dispatcher
 
-StartKeyboard = InlineKeyboardMarkup([
+START_KEYBOARD = InlineKeyboardMarkup([
     [InlineKeyboardButton(text="Написать боту", url="telegram.me/{}".format(updater.bot.username))]
 ])
 
@@ -59,29 +59,26 @@ def admin_shell(bot: Bot, update: Update, args: list):
             bot.send_message(chat_id=msg.chat_id, text="```\n{}\n```".format(
                 eval(" ".join(args))
             ), parse_mode=ParseMode.MARKDOWN, reply_to_message_id=msg.message_id)
+        elif cmd == "reset":
+            reset(bot, None)
 
 
 def svc_handler(bot: Bot, update: Update):
     chat_id = update.message.chat_id
-    to_id = update.message.migrate_to_chat_id
-    if update.message.group_chat_created or \
-            (bool(update.message.new_chat_member) and update.message.new_chat_member.id == bot.id):
+    migrate_to_id = update.message.migrate_to_chat_id
+    new_member = update.message.new_chat_member
+    left_member = update.message.left_chat_member
+    if update.message.group_chat_created or (bool(new_member) and new_member.id == bot.id):
         chat_users[chat_id] = {}
         core.admins_refresh(can_change_name, bot, chat_id)
-    elif to_id != 0:
-        chat_users.update({to_id: chat_users.get(chat_id)})
-        chat_users.pop(chat_id)
-        spin_name.update({to_id: spin_name.get(chat_id)})
-        spin_name.pop(chat_id)
-        can_change_name.update({to_id: can_change_name.get(chat_id)})
-        can_change_name.pop(chat_id)
-        results.update({to_id: results.get(chat_id)})
-        results.pop(chat_id)
-    elif bool(update.message.left_chat_member) and update.message.left_chat_member.id == bot.id:
-        chat_users.pop(chat_id)
-        spin_name.pop(chat_id)
-        can_change_name.pop(chat_id)
-        results.pop(chat_id)
+    elif migrate_to_id != 0:
+        chat_users.update({migrate_to_id: chat_users.get(chat_id)})
+        spin_name.update({migrate_to_id: spin_name.get(chat_id)})
+        can_change_name.update({migrate_to_id: can_change_name.get(chat_id)})
+        results.update({migrate_to_id: results.get(chat_id)})
+        core.clear_data(chat_id, chat_users, spin_name, can_change_name, results)
+    elif bool(left_member) and left_member.id == bot.id:
+        core.clear_data(chat_id, chat_users, spin_name, can_change_name, results)
 
 
 @core.check_destination
@@ -90,7 +87,7 @@ def helper(bot: Bot, update: Update):
         bot.send_message(chat_id=update.message.from_user.id, text=config.HELP_TEXT,
                          parse_mode=ParseMode.MARKDOWN)
     except TelegramError:
-        update.message.reply_text(text=config.PM_ONLY_MESSAGE, reply_markup=StartKeyboard)
+        update.message.reply_text(text=config.PM_ONLY_MESSAGE, reply_markup=START_KEYBOARD)
 
 
 @core.not_pm

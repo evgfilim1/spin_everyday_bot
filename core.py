@@ -73,6 +73,24 @@ def save_all(chat_users: dict, spin_name: dict, can_change_spin_name: dict, resu
     save(results, "results.pkl")
 
 
+def clear_data(chat_id: int, chat_users: dict, spin_name: dict, can_change_name: dict, results: dict):
+    chat_users.pop(chat_id)
+    try:
+        spin_name.pop(chat_id)
+    except KeyError:
+        pass
+
+    try:
+        can_change_name.pop(chat_id)
+    except KeyError:
+        pass
+
+    try:
+        results.pop(chat_id)
+    except KeyError:
+        pass
+
+
 def is_user_left(chat_user: ChatMember) -> bool:
     return chat_user.status == ChatMember.LEFT or \
            chat_user.status == ChatMember.KICKED
