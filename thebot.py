@@ -135,9 +135,11 @@ def change_spin_name(bot: Bot, update: Update, args: list):
     if core.can_change_name(can_change_name, msg.chat_id, msg.from_user.id):
         spin = " ".join(args)
         if spin == "":
-            spin = config.DEFAULT_SPIN_NAME
-        spin_name[msg.chat_id] = spin
-        msg.reply_text(text=f"Текст розыгрыша изменён на *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
+            spin = spin_name.get(msg.chat_id, config.DEFAULT_SPIN_NAME)
+            msg.reply_text(text=f"Текущее название розыгрыша: *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
+        else:
+            spin_name[msg.chat_id] = spin
+            msg.reply_text(text=f"Текст розыгрыша изменён на *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
     else:
         return
 
