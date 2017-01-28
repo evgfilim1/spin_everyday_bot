@@ -161,3 +161,8 @@ def fix_md(text: str) -> str:
         except AttributeError:
             break
     return text
+
+
+def is_admin(user: User):
+    if User.id == BOT_CREATOR:
+        return
