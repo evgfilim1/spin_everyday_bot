@@ -1,3 +1,6 @@
+!#/usr/bin/python3
+#again depends on PM
+
 import logging
 
 from telegram import (Bot, Update, ParseMode, TelegramError,
@@ -14,19 +17,17 @@ TIME_FORMAT = "%d %b, %H:%M:%S"
 LOG_FORMAT = '%(levelname)-8s [%(asctime)s] %(message)s'
 logging.basicConfig(format=LOG_FORMAT, level=logging.INFO, datefmt=TIME_FORMAT)
 
-updater = Updater(config.BOT_TOKEN, workers=8)
+updater = Updater(config.BOT_TOKEN, workers=config.WORKERS)
 jobs = updater.job_queue
 dp = updater.dispatcher
 
-START_KEYBOARD = InlineKeyboardMarkup([
-    [InlineKeyboardButton(text="Написать боту", url="telegram.me/{}".format(updater.bot.username))]
-])
+START_KEYBOARD = InlineKeyboardMarkup([[ InlineKeyboardButton( text="Написать боту", url="telegram.me/{}".format(updater.bot.username) ) ]])
 
 chat_users, spin_name, can_change_name, results = core.load_all()
 
 
 def handle_error(bot: Bot, update: Update, error):
-    core.log_to_channel(bot, "WARNING", f"The last update caused error!\n```\n{error}\n```")
+    core.log_to_channel(bot, "WARNING", f"The last update caused error!\n```\n{error}\n```") # n0w fud1gn' 3ng m8
 
 
 def reset(bot: Bot, job: Job=None):
@@ -46,21 +47,20 @@ def update_cache(bot: Bot, update: Update):
 
 
 @core.check_destination
+@core.is_admin
 def admin_shell(bot: Bot, update: Update, args: list):
     msg = core.get_message(update)
-    if msg.from_user.id == config.BOT_CREATOR:
-        try:
-            cmd = args.pop(0)
-        except IndexError:
-            return
-        if cmd == "exec":
-            exec(" ".join(args))
-        elif cmd == "vardump":
-            bot.send_message(chat_id=msg.chat_id, text="```\n{}\n```".format(
-                eval(" ".join(args))
-            ), parse_mode=ParseMode.MARKDOWN, reply_to_message_id=msg.message_id)
-        elif cmd == "reset":
-            reset(bot, None)
+    try:
+        cmd = args.pop(0)
+    except IndexError:
+        return
+    if cmd == "exec":
+        exec(" ".join(args))
+    elif cmd == "vardump":
+        bot.send_message(chat_id=msg.chat_id, text="```\n{}\n```".format(eval(" ".join(args))), 
+                         parse_mode=ParseMode.MARKDOWN, reply_to_message_id=msg.message_id)
+    elif cmd == "reset":
+        reset(bot, None)
 
 
 def svc_handler(bot: Bot, update: Update):
@@ -75,7 +75,7 @@ def svc_handler(bot: Bot, update: Update):
         if bool(new_member.username) and new_member.username[-3:] == "bot":
             return
         chat_users[chat_id].update({new_member.id: core.get_name(new_member)})
-    elif migrate_to_id != 0:
+    elif migrate_to_id != 0: # function mb?
         chat_users.update({migrate_to_id: chat_users.get(chat_id)})
         spin_name.update({migrate_to_id: spin_name.get(chat_id)})
         can_change_name.update({migrate_to_id: can_change_name.get(chat_id)})
@@ -105,7 +105,7 @@ def admin_refresh(bot: Bot, update: Update):
 
 @core.check_destination
 def ping(bot: Bot, update: Update):
-    update.message.reply_text(text="Ping? Pong!")
+    update.message.reply_text(text="Pong! Pong! Pong! Pong! Bot in da fudgin\\' house m8!")
 
 
 @run_async
@@ -131,10 +131,10 @@ def do_the_spin(bot: Bot, update: Update):
 @core.not_pm
 @core.check_destination
 def change_spin_name(bot: Bot, update: Update, args: list):
-    msg = core.get_message(update)
+    msg = core.get_message(update) #why fudg1n' upd4t3s m8!?
     if core.can_change_name(can_change_name, msg.chat_id, msg.from_user.id):
         spin = " ".join(args)
-        if spin == "":
+        if spin == None:
             spin = config.DEFAULT_SPIN_NAME
         spin_name[msg.chat_id] = spin
         msg.reply_text(text=f"Текст розыгрыша изменён на *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
@@ -145,14 +145,14 @@ def change_spin_name(bot: Bot, update: Update, args: list):
 @core.not_pm
 @core.check_destination
 def spin_count(bot: Bot, update: Update):
-    update.message.reply_text(text="Кол-во людей, участвующих в розыгрыше: _{}_".format(
-                                  len(chat_users[update.message.chat_id])
-                              ), parse_mode=ParseMode.MARKDOWN)
+    update.message.reply_text(text="Кол-во людей, участвующих в розыгрыше: _{}_".format(len(chat_users[update.message.chat_id])),
+                              parse_mode=ParseMode.MARKDOWN)
 
 
 jobs.put(Job(auto_save, 60.0))
 jobs.put(Job(reset, 86400.0), next_t=core.time_diff())
 
+#handler hell
 dp.add_handler(CommandHandler('start', helper))
 dp.add_handler(CommandHandler('help', helper))
 dp.add_handler(CommandHandler('adminF5sn', admin_refresh))

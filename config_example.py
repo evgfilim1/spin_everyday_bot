@@ -42,3 +42,6 @@ LOG_CHANNEL = ""
 
 # Message that will be shown in group chats if the bot can't write in PM
 PM_ONLY_MESSAGE = "Для начала, запусти или разбань меня в ЛС"
+
+# Workers amoutn
+WORKERS = 8
