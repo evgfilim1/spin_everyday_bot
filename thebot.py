@@ -61,6 +61,9 @@ def admin_shell(bot: Bot, update: Update, args: list):
             ), parse_mode=ParseMode.MARKDOWN, reply_to_message_id=msg.message_id)
         elif cmd == "reset":
             reset(bot, None)
+        elif cmd == "respin":
+            core.results.pop(msg.chat_id)
+            msg.reply_text("respin ok")
 
 
 def svc_handler(bot: Bot, update: Update):
