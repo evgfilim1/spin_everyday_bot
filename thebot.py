@@ -22,6 +22,8 @@ START_KEYBOARD = InlineKeyboardMarkup([
     [InlineKeyboardButton(text="Написать боту", url="telegram.me/{}".format(updater.bot.username))]
 ])
 
+locks = []
+
 
 def handle_error(bot: Bot, update: Update, error):
     core.log_to_channel(bot, "WARNING", f"The last update caused error!\n```\n{error}\n```")
@@ -109,6 +111,8 @@ def do_the_spin(bot: Bot, update: Update):
     chat_id = update.message.chat_id
     s = core.fix_md(core.spin_name.get(chat_id, config.DEFAULT_SPIN_NAME))
     p = core.results.get(chat_id)
+    if chat_id in locks:
+        return
     if p is not None:
         bot.send_message(chat_id=chat_id, text=config.TEXT_ALREADY.format(s=s, n=p),
                          parse_mode=ParseMode.MARKDOWN)
@@ -116,10 +120,12 @@ def do_the_spin(bot: Bot, update: Update):
         p = core.fix_md(core.choose_random_user(chat_id, bot))
         from time import sleep
         curr_text = choice(config.TEXTS)
+        locks.append(chat_id)
         for t in curr_text:
             bot.send_message(chat_id=chat_id, text=t.format(s=s, n=p),
                              parse_mode=ParseMode.MARKDOWN)
             sleep(2)
+        locks.pop(locks.index(chat_id))
 
 
 @core.not_pm
