@@ -22,27 +22,25 @@ START_KEYBOARD = InlineKeyboardMarkup([
     [InlineKeyboardButton(text="Написать боту", url="telegram.me/{}".format(updater.bot.username))]
 ])
 
-chat_users, spin_name, can_change_name, results = core.load_all()
-
 
 def handle_error(bot: Bot, update: Update, error):
     core.log_to_channel(bot, "WARNING", f"The last update caused error!\n```\n{error}\n```")
 
 
 def reset(bot: Bot, job: Job=None):
-    results.clear()
+    core.results.clear()
     core.log_to_channel(bot, "INFO", "Reset done")
 
 
 def auto_save(bot: Bot, job: Job):
-    core.save_all(chat_users, spin_name, can_change_name, results)
+    core.save_all()
 
 
 def update_cache(bot: Bot, update: Update):
     msg = core.get_message(update)
     user = msg.from_user
     if not core.is_private(msg.chat_id):
-        chat_users[msg.chat_id].update({user.id: core.get_name(user)})
+        core.chat_users[msg.chat_id].update({user.id: core.get_name(user)})
 
 
 @core.check_destination
@@ -69,22 +67,18 @@ def svc_handler(bot: Bot, update: Update):
     new_member = update.message.new_chat_member
     left_member = update.message.left_chat_member
     if update.message.group_chat_created or (bool(new_member) and new_member.id == bot.id):
-        chat_users[chat_id] = {}
-        core.admins_refresh(can_change_name, bot, chat_id)
+        core.chat_users[chat_id] = {}
+        core.admins_refresh(bot, chat_id)
     elif bool(new_member):
         if bool(new_member.username) and new_member.username[-3:] == "bot":
             return
-        chat_users[chat_id].update({new_member.id: core.get_name(new_member)})
+        core.chat_users[chat_id].update({new_member.id: core.get_name(new_member)})
     elif migrate_to_id != 0:
-        chat_users.update({migrate_to_id: chat_users.get(chat_id)})
-        spin_name.update({migrate_to_id: spin_name.get(chat_id)})
-        can_change_name.update({migrate_to_id: can_change_name.get(chat_id)})
-        results.update({migrate_to_id: results.get(chat_id)})
-        core.clear_data(chat_id, chat_users, spin_name, can_change_name, results)
+        core.migrate(chat_id, migrate_to_id)
     elif bool(left_member) and left_member.id == bot.id:
-        core.clear_data(chat_id, chat_users, spin_name, can_change_name, results)
+        core.clear_data(chat_id)
     elif bool(left_member):
-        chat_users[chat_id].pop(left_member.id)
+        core.chat_users[chat_id].pop(left_member.id)
 
 
 @core.check_destination
@@ -99,7 +93,7 @@ def helper(bot: Bot, update: Update):
 @core.not_pm
 @core.check_destination
 def admin_refresh(bot: Bot, update: Update):
-    core.admins_refresh(can_change_name, bot, update.message.chat_id)
+    core.admins_refresh(bot, update.message.chat_id)
     update.message.reply_text(text="Список админов обновлён")
 
 
@@ -113,13 +107,13 @@ def ping(bot: Bot, update: Update):
 @core.check_destination
 def do_the_spin(bot: Bot, update: Update):
     chat_id = update.message.chat_id
-    s = core.fix_md(spin_name.get(chat_id, config.DEFAULT_SPIN_NAME))
-    p = results.get(chat_id)
+    s = core.fix_md(core.spin_name.get(chat_id, config.DEFAULT_SPIN_NAME))
+    p = core.results.get(chat_id)
     if p is not None:
         bot.send_message(chat_id=chat_id, text=config.TEXT_ALREADY.format(s=s, n=p),
                          parse_mode=ParseMode.MARKDOWN)
     else:
-        p = core.fix_md(core.choose_random_user(chat_users, results, chat_id, bot))
+        p = core.fix_md(core.choose_random_user(chat_id, bot))
         from time import sleep
         curr_text = choice(config.TEXTS)
         for t in curr_text:
@@ -132,13 +126,13 @@ def do_the_spin(bot: Bot, update: Update):
 @core.check_destination
 def change_spin_name(bot: Bot, update: Update, args: list):
     msg = core.get_message(update)
-    if core.can_change_name(can_change_name, msg.chat_id, msg.from_user.id):
+    if core.can_change_name(msg.chat_id, msg.from_user.id):
         spin = " ".join(args)
         if spin == "":
-            spin = spin_name.get(msg.chat_id, config.DEFAULT_SPIN_NAME)
+            spin = core.spin_name.get(msg.chat_id, config.DEFAULT_SPIN_NAME)
             msg.reply_text(text=f"Текущее название розыгрыша: *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
         else:
-            spin_name[msg.chat_id] = spin
+            core.spin_name[msg.chat_id] = spin
             msg.reply_text(text=f"Текст розыгрыша изменён на *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
     else:
         return
@@ -148,7 +142,7 @@ def change_spin_name(bot: Bot, update: Update, args: list):
 @core.check_destination
 def spin_count(bot: Bot, update: Update):
     update.message.reply_text(text="Кол-во людей, участвующих в розыгрыше: _{}_".format(
-                                  len(chat_users[update.message.chat_id])
+                                  len(core.chat_users[update.message.chat_id])
                               ), parse_mode=ParseMode.MARKDOWN)
 
 
@@ -168,10 +162,9 @@ dp.add_handler(MessageHandler(Filters.all, update_cache, allow_edited=True), gro
 
 dp.add_error_handler(handle_error)
 
-core.log_to_channel(updater.bot, "INFO", "Bot started")
-
 updater.start_polling(clean=True)
+core.log_to_channel(updater.bot, "INFO", "Bot started")
 updater.idle()
 
-core.save_all(chat_users, spin_name, can_change_name, results)
+core.save_all()
 core.log_to_channel(updater.bot, "INFO", "Bot stopped")

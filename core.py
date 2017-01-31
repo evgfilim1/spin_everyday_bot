@@ -6,6 +6,11 @@ from telegram import User, Update, Message, Bot
 
 from config import RESET_TIME, BOT_CREATOR, LOG_CHANNEL
 
+chat_users = {}
+spin_name = {}
+can_change_name = {}
+results = {}
+
 
 def _check_destination(bot_name: str, message_text: str) -> bool:
     msg = message_text.split()
@@ -56,24 +61,24 @@ def save(obj: dict, filename: str):
         pickle.dump(obj, ff, pickle.HIGHEST_PROTOCOL)
 
 
-def load_all() -> (dict, dict, dict, dict):
+def load_all():
+    global chat_users, spin_name, can_change_name, results
     if not __import__("os").path.exists("users.pkl"):
         return {}, {}, {}, {}
     chat_users = load("users.pkl")
     spin_name = load("spin.pkl")
-    can_change_spin_name = load("changers.pkl")
+    can_change_name = load("changers.pkl")
     results = load("results.pkl")
-    return chat_users, spin_name, can_change_spin_name, results
 
 
-def save_all(chat_users: dict, spin_name: dict, can_change_spin_name: dict, results: dict):
+def save_all():
     save(chat_users, "users.pkl")
     save(spin_name, "spin.pkl")
-    save(can_change_spin_name, "changers.pkl")
+    save(can_change_name, "changers.pkl")
     save(results, "results.pkl")
 
 
-def clear_data(chat_id: int, chat_users: dict, spin_name: dict, can_change_name: dict, results: dict):
+def clear_data(chat_id: int):
     chat_users.pop(chat_id)
     try:
         spin_name.pop(chat_id)
@@ -89,6 +94,14 @@ def clear_data(chat_id: int, chat_users: dict, spin_name: dict, can_change_name:
         results.pop(chat_id)
     except KeyError:
         pass
+
+
+def migrate(from_chat: int, to_chat: int):
+    chat_users.update({to_chat: chat_users.get(from_chat)})
+    spin_name.update({to_chat: spin_name.get(from_chat)})
+    can_change_name.update({to_chat: can_change_name.get(from_chat)})
+    results.update({to_chat: results.get(from_chat)})
+    clear_data(from_chat)
 
 
 def is_user_left(chat_user: ChatMember) -> bool:
@@ -109,7 +122,7 @@ def get_message(update: Update) -> Message:
     return update.message or update.edited_message
 
 
-def choose_random_user(chat_users: dict, results: dict, chat_id: int, bot: Bot) -> str:
+def choose_random_user(chat_id: int, bot: Bot) -> str:
     from random import choice
     user = choice(list(chat_users[chat_id].items()))    # Getting tuple (user_id, username)
     try:
@@ -118,15 +131,15 @@ def choose_random_user(chat_users: dict, results: dict, chat_id: int, bot: Bot) 
             raise TelegramError("User left the group")
     except TelegramError:
         chat_users[chat_id].pop(user[0])
-        return choose_random_user(chat_users, results, chat_id, bot)
+        return choose_random_user(chat_id, bot)
     user = get_name(member.user)
     results.update({chat_id: user})
     chat_users[chat_id].update({member.user.id: user})
     return user
 
 
-def can_change_name(can_change_spin_name: dict, chat_id: int, user_id: int) -> bool:
-    return user_id in can_change_spin_name[chat_id] or user_id == BOT_CREATOR
+def can_change_spin_name(chat_id: int, user_id: int) -> bool:
+    return user_id in can_change_name[chat_id] or user_id == BOT_CREATOR
 
 
 def log_to_channel(bot: Bot, level: str, text: str):
@@ -135,7 +148,7 @@ def log_to_channel(bot: Bot, level: str, text: str):
     ), parse_mode=ParseMode.MARKDOWN)
 
 
-def announce(bot: Bot, chat_users: dict, text: str, md: bool=False):
+def announce(bot: Bot, text: str, md: bool=False):
     for chat in chat_users.keys():
         try:
             if md:
@@ -146,11 +159,11 @@ def announce(bot: Bot, chat_users: dict, text: str, md: bool=False):
             pass
 
 
-def admins_refresh(can_change_spin_name: dict, bot: Bot, chat_id: int):
+def admins_refresh(bot: Bot, chat_id: int):
     admins = bot.get_chat_administrators(chat_id=chat_id)
-    can_change_spin_name[chat_id] = []
+    can_change_name[chat_id] = []
     for admin in admins:
-        can_change_spin_name[chat_id].append(admin.user.id)
+        can_change_name[chat_id].append(admin.user.id)
 
 
 def fix_md(text: str) -> str:
@@ -161,3 +174,5 @@ def fix_md(text: str) -> str:
         except AttributeError:
             break
     return text
+
+load_all()
