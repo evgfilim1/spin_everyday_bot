@@ -163,7 +163,7 @@ def top(bot: Bot, update: Update, args: list):
 @core.check_destination
 def change_spin_name(bot: Bot, update: Update, args: list):
     msg = core.get_message(update)
-    if core.can_change_name(msg.chat_id, msg.from_user.id):
+    if core.can_change_spin_name(msg.chat_id, msg.from_user.id):
         spin = " ".join(args)
         if spin == "":
             spin = core.spin_name.get(msg.chat_id, config.DEFAULT_SPIN_NAME)
