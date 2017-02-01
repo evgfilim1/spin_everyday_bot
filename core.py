@@ -10,7 +10,8 @@ from config import RESET_TIME, BOT_CREATOR, LOG_CHANNEL
 chat_users = {}
 spin_name = {}
 can_change_name = {}
-results = {}
+results_today = {}
+results_total = {}
 
 announcement_chats = []
 
@@ -65,20 +66,22 @@ def save(obj: dict, filename: str):
 
 
 def load_all():
-    global chat_users, spin_name, can_change_name, results
+    global chat_users, spin_name, can_change_name, results_today, results_total
     if not __import__("os").path.exists("users.pkl"):
-        return {}, {}, {}, {}
+        return
     chat_users = load("users.pkl")
     spin_name = load("spin.pkl")
     can_change_name = load("changers.pkl")
-    results = load("results.pkl")
+    results_today = load("results.pkl")
+    results_total = load("total.pkl")
 
 
 def save_all():
     save(chat_users, "users.pkl")
     save(spin_name, "spin.pkl")
     save(can_change_name, "changers.pkl")
-    save(results, "results.pkl")
+    save(results_today, "results.pkl")
+    save(results_total, "total.pkl")
 
 
 def clear_data(chat_id: int):
@@ -94,7 +97,7 @@ def clear_data(chat_id: int):
         pass
 
     try:
-        results.pop(chat_id)
+        results_today.pop(chat_id)
     except KeyError:
         pass
 
@@ -103,7 +106,7 @@ def migrate(from_chat: int, to_chat: int):
     chat_users.update({to_chat: chat_users.get(from_chat)})
     spin_name.update({to_chat: spin_name.get(from_chat)})
     can_change_name.update({to_chat: can_change_name.get(from_chat)})
-    results.update({to_chat: results.get(from_chat)})
+    results_today.update({to_chat: results_today.get(from_chat)})
     clear_data(from_chat)
 
 
@@ -136,9 +139,17 @@ def choose_random_user(chat_id: int, bot: Bot) -> str:
         chat_users[chat_id].pop(user[0])
         return choose_random_user(chat_id, bot)
     user = get_name(member.user)
-    results.update({chat_id: user})
-    chat_users[chat_id].update({member.user.id: user})
+    uid = member.user.id
+    results_today.update({chat_id: user})
+    chat_users[chat_id].update({uid: user})
+    if chat_id not in results_total:
+        results_total.update({chat_id: {}})
+    results_total[chat_id].update({uid: results_total[chat_id].get(uid, 0) + 1})
     return user
+
+
+def top_win(chat_id: int) -> list:
+    return sorted(results_total.get(chat_id, {}).items(), key=lambda x: x[1], reverse=True)
 
 
 def can_change_spin_name(chat_id: int, user_id: int) -> bool:

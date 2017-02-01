@@ -30,7 +30,7 @@ def handle_error(bot: Bot, update: Update, error):
 
 
 def reset(bot: Bot, job: Job=None):
-    core.results.clear()
+    core.results_today.clear()
     core.log_to_channel(bot, "INFO", "Reset done")
 
 
@@ -62,7 +62,7 @@ def admin_shell(bot: Bot, update: Update, args: list):
         elif cmd == "reset":
             reset(bot, None)
         elif cmd == "respin":
-            core.results.pop(msg.chat_id)
+            core.results_today.pop(msg.chat_id)
             msg.reply_text("respin ok")
         elif cmd == "md_announce":
             core.announce(bot, " ".join(args), md=True)
@@ -117,7 +117,7 @@ def ping(bot: Bot, update: Update):
 def do_the_spin(bot: Bot, update: Update):
     chat_id = update.message.chat_id
     s = core.fix_md(core.spin_name.get(chat_id, config.DEFAULT_SPIN_NAME))
-    p = core.results.get(chat_id)
+    p = core.results_today.get(chat_id)
     if chat_id in locks:
         return
     if p is not None:
@@ -133,6 +133,17 @@ def do_the_spin(bot: Bot, update: Update):
                              parse_mode=ParseMode.MARKDOWN)
             sleep(2)
         locks.pop(locks.index(chat_id))
+
+
+def top(bot: Bot, update: Update):
+    chat_id = update.message.chat_id
+    if chat_id in locks:
+        return
+    text = "Статистика пользователей в данном чате: (первые 10 человек)\n"
+    for user in core.top_win(chat_id)[:10]:
+        username = core.chat_users[chat_id].get(user[0], f"id{user[0]}")
+        text += f"*{username}*: {user[1]} раз(а)\n"
+    update.message.reply_text(text=text, parse_mode=ParseMode.MARKDOWN)
 
 
 @core.not_pm
@@ -170,6 +181,7 @@ dp.add_handler(CommandHandler('pingsn', ping))
 dp.add_handler(CommandHandler('setsn', change_spin_name, pass_args=True, allow_edited=True))
 dp.add_handler(CommandHandler('countsn', spin_count))
 dp.add_handler(CommandHandler('spinsn', do_the_spin))
+dp.add_handler(CommandHandler('topsn', top))
 dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
 dp.add_handler(MessageHandler(Filters.all, update_cache, allow_edited=True), group=-1)
 
