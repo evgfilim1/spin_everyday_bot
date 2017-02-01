@@ -165,12 +165,14 @@ def top(bot: Bot, update: Update, args: list):
 @core.check_destination
 def change_spin_name(bot: Bot, update: Update, args: list):
     msg = core.get_message(update)
-    if core.can_change_spin_name(msg.chat_id, msg.from_user.id):
-        spin = " ".join(args)
-        if spin == "":
+    if core.can_change_spin_name(msg.chat_id, msg.from_user.id, bot):
+        if len(args) == 0:
             spin = core.spin_name.get(msg.chat_id, config.DEFAULT_SPIN_NAME)
             msg.reply_text(text=f"Текущее название розыгрыша: *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
         else:
+            if args[-1].lower() == "дня" and len(args) > 1:
+                args.pop(-1)
+            spin = " ".join(args)
             core.spin_name[msg.chat_id] = spin
             msg.reply_text(text=f"Текст розыгрыша изменён на *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
     else:

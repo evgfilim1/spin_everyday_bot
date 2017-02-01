@@ -152,8 +152,9 @@ def top_win(chat_id: int) -> list:
     return sorted(results_total.get(chat_id, {}).items(), key=lambda x: x[1], reverse=True)
 
 
-def can_change_spin_name(chat_id: int, user_id: int) -> bool:
-    return user_id in can_change_name[chat_id] or user_id == BOT_CREATOR
+def can_change_spin_name(chat_id: int, user_id: int, bot: Bot) -> bool:
+    return user_id in get_admins_ids(bot, chat_id) or \
+           user_id in can_change_name[chat_id] or user_id == BOT_CREATOR
 
 
 def log_to_channel(bot: Bot, level: str, text: str):
@@ -186,11 +187,12 @@ def announce(bot: Bot, text: str, md: bool=False):
             sleep_border = 15
 
 
-def admins_refresh(bot: Bot, chat_id: int):
+def get_admins_ids(bot: Bot, chat_id: int) -> list:
     admins = bot.get_chat_administrators(chat_id=chat_id)
-    can_change_name[chat_id] = []
+    result = []
     for admin in admins:
-        can_change_name[chat_id].append(admin.user.id)
+        result.append(admin.user.id)
+    return result
 
 
 def fix_md(text: str) -> str:
