@@ -135,14 +135,27 @@ def do_the_spin(bot: Bot, update: Update):
         locks.pop(locks.index(chat_id))
 
 
-def top(bot: Bot, update: Update):
+def top(bot: Bot, update: Update, args: list):
     chat_id = update.message.chat_id
     if chat_id in locks:
         return
-    text = "Статистика пользователей в данном чате: (первые 10 человек)\n"
-    for user in core.top_win(chat_id)[:10]:
-        username = core.chat_users[chat_id].get(user[0], f"id{user[0]}")
-        text += f"*{username}*: {user[1]} раз(а)\n"
+    if chat_id not in core.results_total:
+        core.results_total[chat_id] = {}
+    if len(args) == 1 and args[0] == "me":
+        user = update.message.from_user
+        username = core.get_name(user)
+        stat = core.results_total[chat_id].get(user.id, 0)
+        text = f"Ваша статистика:\n*{username}*: {stat} раз(а)"
+    elif update.message.reply_to_message:
+        user = update.message.reply_to_message.from_user
+        username = core.get_name(user)
+        stat = core.results_total[chat_id].get(user.id, 0)
+        text = f"Статистика пользователя *{username}*: {stat} раз(а)"
+    else:
+        text = "Статистика пользователей в данном чате: (первые 10 человек)\n"
+        for user in core.top_win(chat_id)[:10]:
+            username = core.chat_users[chat_id].get(user[0], f"id{user[0]}")
+            text += f"*{username}*: {user[1]} раз(а)\n"
     update.message.reply_text(text=text, parse_mode=ParseMode.MARKDOWN)
 
 
@@ -181,7 +194,7 @@ dp.add_handler(CommandHandler('pingsn', ping))
 dp.add_handler(CommandHandler('setsn', change_spin_name, pass_args=True, allow_edited=True))
 dp.add_handler(CommandHandler('countsn', spin_count))
 dp.add_handler(CommandHandler('spinsn', do_the_spin))
-dp.add_handler(CommandHandler('topsn', top))
+dp.add_handler(CommandHandler('statsn', top, pass_args=True))
 dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
 dp.add_handler(MessageHandler(Filters.all, update_cache, allow_edited=True), group=-1)
 
