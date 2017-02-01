@@ -135,6 +135,8 @@ def do_the_spin(bot: Bot, update: Update):
         locks.pop(locks.index(chat_id))
 
 
+@core.not_pm
+@core.check_destination
 def top(bot: Bot, update: Update, args: list):
     chat_id = update.message.chat_id
     if chat_id in locks:
