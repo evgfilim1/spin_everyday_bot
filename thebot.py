@@ -77,7 +77,7 @@ def svc_handler(bot: Bot, update: Update):
     left_member = update.message.left_chat_member
     if update.message.group_chat_created or (bool(new_member) and new_member.id == bot.id):
         core.chat_users[chat_id] = {}
-        core.admins_refresh(bot, chat_id)
+        core.can_change_name[chat_id] = []
     elif bool(new_member):
         if bool(new_member.username) and new_member.username[-3:] == "bot":
             return
@@ -97,13 +97,6 @@ def helper(bot: Bot, update: Update):
                          parse_mode=ParseMode.MARKDOWN)
     except TelegramError:
         update.message.reply_text(text=config.PM_ONLY_MESSAGE, reply_markup=START_KEYBOARD)
-
-
-@core.not_pm
-@core.check_destination
-def admin_refresh(bot: Bot, update: Update):
-    core.admins_refresh(bot, update.message.chat_id)
-    update.message.reply_text(text="Список админов обновлён")
 
 
 @core.check_destination
@@ -175,8 +168,37 @@ def change_spin_name(bot: Bot, update: Update, args: list):
             spin = " ".join(args)
             core.spin_name[msg.chat_id] = spin
             msg.reply_text(text=f"Текст розыгрыша изменён на *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
-    else:
+
+
+@core.not_pm
+@core.check_destination
+def admin_ctrl(bot: Bot, update: Update, args: list):
+    msg = core.get_message(update)
+    reply = msg.reply_to_message
+    admins = core.get_admins_ids(bot, msg.chat_id)
+    admins.append(config.BOT_CREATOR)
+    if not reply or len(args) == 0 or msg.from_user.id not in admins:
         return
+    cmd = args.pop(0)
+    if msg.chat_id not in core.can_change_name:
+        core.can_change_name[msg.chat_id] = []
+    if cmd == "add":
+        if core.can_change_spin_name(msg.chat_id, reply.from_user.id, bot):
+            msg.reply_text(text="Этот пользователь *уже может* изменять название розыгрыша",
+                           parse_mode=ParseMode.MARKDOWN)
+        else:
+            core.can_change_name[msg.chat_id].append(reply.from_user.id)
+            msg.reply_text(text="Теперь этот пользователь *может* изменять название розыгрыша",
+                           parse_mode=ParseMode.MARKDOWN)
+    elif cmd == "del":
+        if not core.can_change_spin_name(msg.chat_id, reply.from_user.id, bot):
+            msg.reply_text(text="Этот пользователь *ещё не может* изменять название розыгрыша",
+                           parse_mode=ParseMode.MARKDOWN)
+        else:
+            index = core.can_change_name[msg.chat_id].index(reply.from_user.id)
+            core.can_change_name[msg.chat_id].pop(index)
+            msg.reply_text(text="Теперь этот пользователь *не может* изменять название розыгрыша",
+                           parse_mode=ParseMode.MARKDOWN)
 
 
 @core.not_pm
@@ -192,7 +214,7 @@ jobs.put(Job(reset, 86400.0), next_t=core.time_diff())
 
 dp.add_handler(CommandHandler('start', helper))
 dp.add_handler(CommandHandler('help', helper))
-dp.add_handler(CommandHandler('adminF5', admin_refresh))
+dp.add_handler(CommandHandler('admgroup', admin_ctrl, pass_args=True, allow_edited=True))
 dp.add_handler(CommandHandler('sudo', admin_shell, pass_args=True, allow_edited=True))
 dp.add_handler(CommandHandler('ping', ping))
 dp.add_handler(CommandHandler('setname', change_spin_name, pass_args=True, allow_edited=True))
