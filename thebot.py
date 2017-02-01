@@ -64,6 +64,10 @@ def admin_shell(bot: Bot, update: Update, args: list):
         elif cmd == "respin":
             core.results.pop(msg.chat_id)
             msg.reply_text("respin ok")
+        elif cmd == "md_announce":
+            core.announce(bot, " ".join(args), md=True)
+        elif cmd == "announce":
+            core.announce(bot, " ".join(args))
 
 
 def svc_handler(bot: Bot, update: Update):

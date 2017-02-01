@@ -3,6 +3,7 @@ from datetime import datetime
 
 from telegram import ChatMember, ParseMode, TelegramError
 from telegram import User, Update, Message, Bot
+from telegram.ext.dispatcher import run_async
 
 from config import RESET_TIME, BOT_CREATOR, LOG_CHANNEL
 
@@ -10,6 +11,8 @@ chat_users = {}
 spin_name = {}
 can_change_name = {}
 results = {}
+
+announcement_chats = []
 
 
 def _check_destination(bot_name: str, message_text: str) -> bool:
@@ -148,15 +151,28 @@ def log_to_channel(bot: Bot, level: str, text: str):
     ), parse_mode=ParseMode.MARKDOWN)
 
 
+@run_async
 def announce(bot: Bot, text: str, md: bool=False):
-    for chat in chat_users.keys():
+    from time import sleep
+    # Sending announcement to 15 chats, then sleep
+    sleep_border = 15
+    announcement_chats.extend(chat_users.keys())
+    text = text.replace("\\n", "\n")
+    while len(announcement_chats) > 0:
+        chat = announcement_chats.pop()
         try:
             if md:
                 bot.send_message(chat_id=chat, text=text, parse_mode=ParseMode.MARKDOWN)
             else:
                 bot.send_message(chat_id=chat, text=text)
+            sleep_border -= 1
         except TelegramError:
-            pass
+            log_to_channel(bot, "WARNING", f"Chat {chat} is not reachable for messages, deleting it")
+            chat_users.pop(chat)
+            # pass
+        if sleep_border == 0:
+            sleep(5)
+            sleep_border = 15
 
 
 def admins_refresh(bot: Bot, chat_id: int):
