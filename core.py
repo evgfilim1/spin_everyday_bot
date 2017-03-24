@@ -5,7 +5,7 @@ from telegram import ChatMember, ParseMode, TelegramError
 from telegram import User, Update, Message, Bot
 from telegram.ext.dispatcher import run_async
 
-from config import RESET_TIME, BOT_CREATOR, LOG_CHANNEL
+from config import RESET_TIME, BOT_CREATOR, LOG_CHANNEL, TOP_PAGE_SIZE
 
 chat_users = {}
 spin_name = {}
@@ -130,7 +130,7 @@ def get_message(update: Update) -> Message:
 
 def choose_random_user(chat_id: int, bot: Bot) -> str:
     from random import choice
-    user = choice(list(chat_users[chat_id].items()))    # Getting tuple (user_id, username)
+    user = choice(list(chat_users[chat_id].items()))  # Getting tuple (user_id, username)
     try:
         member = bot.get_chat_member(chat_id=chat_id, user_id=user[0])
         if is_user_left(member):
@@ -152,6 +152,20 @@ def top_win(chat_id: int) -> list:
     return sorted(results_total.get(chat_id, {}).items(), key=lambda x: x[1], reverse=True)
 
 
+def make_top(chat_id: int, *, page: int) -> (str, int):
+    winners = top_win(chat_id)
+    total_pages = len(winners) // TOP_PAGE_SIZE
+    begin = (page - 1) * TOP_PAGE_SIZE
+    end = begin + TOP_PAGE_SIZE
+    if len(winners) % TOP_PAGE_SIZE != 0:
+        total_pages += 1
+    text = f"Статистика пользователей в данном чате: (страница {page} из {total_pages})\n"
+    for user in winners[begin:end]:
+        username = chat_users[chat_id].get(user[0], f"id{user[0]}")
+        text += f"*{username}*: {user[1]} раз(а)\n"
+    return text, total_pages
+
+
 def can_change_spin_name(chat_id: int, user_id: int, bot: Bot) -> bool:
     return user_id in get_admins_ids(bot, chat_id) or \
            user_id in can_change_name[chat_id] or user_id == BOT_CREATOR
@@ -164,7 +178,7 @@ def log_to_channel(bot: Bot, level: str, text: str):
 
 
 @run_async
-def announce(bot: Bot, text: str, md: bool=False):
+def announce(bot: Bot, text: str, md: bool = False):
     from time import sleep
     # Sending announcement to 15 chats, then sleep
     sleep_border = 15
@@ -203,5 +217,6 @@ def fix_md(text: str) -> str:
         except AttributeError:
             break
     return text
+
 
 load_all()

@@ -2,7 +2,7 @@ import logging
 
 from telegram import (Bot, Update, ParseMode, TelegramError,
                       InlineKeyboardMarkup, InlineKeyboardButton)
-from telegram.ext import Updater, Job, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, Job, CommandHandler, MessageHandler, CallbackQueryHandler, Filters
 from telegram.ext.dispatcher import run_async
 
 from random import choice
@@ -43,6 +43,29 @@ def update_cache(bot: Bot, update: Update):
     user = msg.from_user
     if not core.is_private(msg.chat_id):
         core.chat_users[msg.chat_id].update({user.id: core.get_name(user)})
+
+
+def button_handler(bot: Bot, update: Update):
+    query = update.callback_query
+    data = query.data.split(':')
+    msg = query.message
+
+    if msg.chat_id in locks:
+        query.answer("Нельзя использовать кнопки, пока идёт розыгрыш")
+
+    if data[0] == 'top':
+        page_n = int(data[1].split('_')[1])
+        text, max_pages = core.make_top(msg.chat_id, page=page_n)
+        reply_keyboard = [[]]
+        if page_n != 1:
+            reply_keyboard[0].append(InlineKeyboardButton("<<", callback_data=f"top:page_{page_n - 1}"))
+        if page_n != max_pages:
+            reply_keyboard[0].append(InlineKeyboardButton(">>", callback_data=f"top:page_{page_n + 1}"))
+        try:
+            query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(reply_keyboard),
+                                    parse_mode=ParseMode.MARKDOWN)
+        except TelegramError:
+            pass
 
 
 @core.check_destination
@@ -140,6 +163,7 @@ def do_the_spin(bot: Bot, update: Update):
 @core.check_destination
 def top(bot: Bot, update: Update, args: list):
     chat_id = update.message.chat_id
+    reply_keyboard = [[]]
     if chat_id in locks:
         return
     if chat_id not in core.results_total:
@@ -155,11 +179,11 @@ def top(bot: Bot, update: Update, args: list):
         stat = core.results_total[chat_id].get(user.id, 0)
         text = f"Статистика пользователя *{username}*: {stat} раз(а)"
     else:
-        text = "Статистика пользователей в данном чате: (первые 10 человек)\n"
-        for user in core.top_win(chat_id)[:10]:
-            username = core.chat_users[chat_id].get(user[0], f"id{user[0]}")
-            text += f"*{username}*: {user[1]} раз(а)\n"
-    update.message.reply_text(text=text, parse_mode=ParseMode.MARKDOWN)
+        text, pages = core.make_top(chat_id, page=1)
+        if pages > 1:
+            reply_keyboard = [[InlineKeyboardButton(">>", callback_data="top:page_2")]]
+    update.message.reply_text(text=text, parse_mode=ParseMode.MARKDOWN,
+                              reply_markup=InlineKeyboardMarkup(reply_keyboard))
 
 
 @core.not_pm
@@ -238,6 +262,7 @@ dp.add_handler(CommandHandler('count', spin_count))
 dp.add_handler(CommandHandler('spin', do_the_spin))
 dp.add_handler(CommandHandler('stat', top, pass_args=True))
 dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
+dp.add_handler(CallbackQueryHandler(button_handler))
 dp.add_handler(MessageHandler(Filters.all, update_cache, allow_edited=True), group=-1)
 
 dp.add_error_handler(handle_error)
