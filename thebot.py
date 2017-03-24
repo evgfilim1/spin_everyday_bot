@@ -87,7 +87,7 @@ def svc_handler(bot: Bot, update: Update):
         core.chat_users[chat_id] = {}
         core.can_change_name[chat_id] = []
     elif bool(new_member):
-        if bool(new_member.username) and new_member.username[-3:] == "bot":
+        if bool(new_member.username) and new_member.username[-3:].lower() == "bot":
             return
         core.chat_users[chat_id].update({new_member.id: core.get_name(new_member)})
     elif migrate_to_id != 0:
