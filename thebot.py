@@ -48,26 +48,33 @@ def update_cache(bot: Bot, update: Update):
 @core.check_destination
 def admin_shell(bot: Bot, update: Update, args: list):
     msg = core.get_message(update)
-    if msg.from_user.id == config.BOT_CREATOR:
-        try:
-            cmd = args.pop(0)
-        except IndexError:
-            return
-        if cmd == "exec":
-            exec(" ".join(args))
-        elif cmd == "vardump":
-            bot.send_message(chat_id=msg.chat_id, text="```\n{}\n```".format(
-                eval(" ".join(args))
-            ), parse_mode=ParseMode.MARKDOWN, reply_to_message_id=msg.message_id)
-        elif cmd == "reset":
-            reset(bot, None)
-        elif cmd == "respin":
-            core.results_today.pop(msg.chat_id)
-            msg.reply_text("respin ok")
-        elif cmd == "md_announce":
-            core.announce(bot, " ".join(args), md=True)
-        elif cmd == "announce":
-            core.announce(bot, " ".join(args))
+    if msg.from_user.id != config.BOT_CREATOR:
+        return
+
+    try:
+        cmd = args.pop(0)
+    except IndexError:
+        return
+    if cmd == "exec":
+        exec(" ".join(args))
+    elif cmd == "vardump":
+        bot.send_message(chat_id=msg.chat_id, text="```\n{}\n```".format(
+            eval(" ".join(args))
+        ), parse_mode=ParseMode.MARKDOWN, reply_to_message_id=msg.message_id)
+    elif cmd == "reset":
+        reset(bot, None)
+    elif cmd == "respin":
+        core.results_today.pop(msg.chat_id)
+        msg.reply_text("respin ok")
+    elif cmd == "md_announce":
+        core.announce(bot, " ".join(args), md=True)
+    elif cmd == "announce":
+        core.announce(bot, " ".join(args))
+    elif cmd == "help":
+        msg.reply_text("Help:\nexec — execute code\nvardump — print variable's value\n"
+                       "reset — reset all spins\nrespin — reset spin in this chat\n"
+                       "md_announce — tell smth. to all chats (markdown is on)\n"
+                       "announce — tell smth. to all chats (markdown is off)")
 
 
 def svc_handler(bot: Bot, update: Update):
@@ -76,6 +83,7 @@ def svc_handler(bot: Bot, update: Update):
     new_member = update.message.new_chat_member
     left_member = update.message.left_chat_member
     if update.message.group_chat_created or (bool(new_member) and new_member.id == bot.id):
+        # TODO: add admins to the list
         core.chat_users[chat_id] = {}
         core.can_change_name[chat_id] = []
     elif bool(new_member):
