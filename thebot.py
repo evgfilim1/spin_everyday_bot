@@ -209,12 +209,13 @@ def admin_ctrl(bot: Bot, update: Update, args: list):
     reply = msg.reply_to_message
     admins = core.get_admins_ids(bot, msg.chat_id)
     admins.append(config.BOT_CREATOR)
-    if len(args) == 0 or msg.from_user.id not in admins:
+    is_admin = msg.from_user.id in admins
+    if len(args) == 0:
         return
     cmd = args.pop(0)
     if msg.chat_id not in core.can_change_name:
         core.can_change_name[msg.chat_id] = []
-    if cmd == "add" and reply:
+    if cmd == "add" and reply and is_admin:
         if core.can_change_spin_name(msg.chat_id, reply.from_user.id, bot):
             msg.reply_text(text="Этот пользователь *уже может* изменять название розыгрыша",
                            parse_mode=ParseMode.MARKDOWN)
@@ -222,7 +223,7 @@ def admin_ctrl(bot: Bot, update: Update, args: list):
             core.can_change_name[msg.chat_id].append(reply.from_user.id)
             msg.reply_text(text="Теперь этот пользователь *может* изменять название розыгрыша",
                            parse_mode=ParseMode.MARKDOWN)
-    elif cmd == "del" and reply:
+    elif cmd == "del" and reply and is_admin:
         if not core.can_change_spin_name(msg.chat_id, reply.from_user.id, bot):
             msg.reply_text(text="Этот пользователь *ещё не может* изменять название розыгрыша",
                            parse_mode=ParseMode.MARKDOWN)
@@ -232,8 +233,6 @@ def admin_ctrl(bot: Bot, update: Update, args: list):
             msg.reply_text(text="Теперь этот пользователь *не может* изменять название розыгрыша",
                            parse_mode=ParseMode.MARKDOWN)
     elif cmd == "list":
-        if not core.can_change_spin_name(msg.chat_id, msg.from_user.id, bot):
-            return
         text = "Пользователи, которые *могут* изменять название розыгрыша (не считая администраторов):\n```\n"
         for user in core.can_change_name[msg.chat_id]:
             text += core.chat_users[msg.chat_id].get(user, f"id{user}") + '\n'
