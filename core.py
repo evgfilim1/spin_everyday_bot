@@ -168,6 +168,8 @@ def choose_random_user(chat_id: int, bot: Bot) -> str:
         member = bot.get_chat_member(chat_id=chat_id, user_id=user[0])
         if is_user_left(member):
             raise TelegramError("User left the group")
+        if get_name(member.user) == '':
+            raise TelegramError("User deleted from Telegram")
     except TelegramError as e:
         chat_users[chat_id].pop(user[0])
         log.info(f"{e}. User info: {user}, chat_id: {chat_id}")
