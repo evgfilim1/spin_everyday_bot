@@ -38,7 +38,7 @@ del tg_handler, tg_log
 
 
 def handle_error(bot: Bot, update: Update, error):
-    log.error(f"Update {update} caused error: {error}```")
+    log.error(f"Update {update} caused error: {error}")
 
 
 def reset(bot: Bot, job: Job=None):
@@ -60,7 +60,8 @@ def auto_spin(bot: Bot, job: Job):
 def update_cache(bot: Bot, update: Update):
     msg = core.get_message(update)
     user = msg.from_user
-    if not core.is_private(msg.chat_id):
+    # Also skip first update when the bot is added
+    if not core.is_private(msg.chat_id) and core.chat_users.get(msg.chat_id) is not None:
         core.chat_users[msg.chat_id].update({user.id: core.get_name(user)})
 
 
