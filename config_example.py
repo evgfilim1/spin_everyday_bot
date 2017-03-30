@@ -54,8 +54,8 @@ HELP_TEXT = """*Привет!* Я бот, который делает ежедн
 \_\_\_\_\_\_
 По всем вопросам обращайтесь к @USER"""
 
-# Time of resetting spin results
-RESET_TIME = "0:00"
+# Time of resetting spin results (in GMT)
+RESET_TIME = "21:00"
 
 # Logging channel. You can put here "@telegramChannelName" or channel's ID
 LOG_CHANNEL = ""

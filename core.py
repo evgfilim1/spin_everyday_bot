@@ -1,8 +1,8 @@
 import pickle
 from datetime import datetime
 
-from telegram import ChatMember, ParseMode, TelegramError
-from telegram import User, Update, Message, Bot
+from telegram import (ChatMember, ParseMode, TelegramError,
+                      User, Update, Message, Bot)
 from telegram.ext.dispatcher import run_async
 import logging
 
@@ -150,8 +150,9 @@ def is_user_left(chat_user: ChatMember) -> bool:
 
 def time_diff() -> float:
     t = RESET_TIME.split(':')
-    now = datetime.now()
-    then = datetime(2016, 1, 1, int(t[0]), int(t[1]))
+    # now = datetime.now()
+    now = datetime.utcnow()
+    then = datetime(2017, 1, 1, int(t[0]), int(t[1]))
     diff = then - now
     delta = float(diff.seconds) + (diff.microseconds / 10 ** 6)
     return delta
