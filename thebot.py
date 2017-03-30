@@ -56,28 +56,27 @@ def update_cache(bot: Bot, update: Update):
         core.chat_users[msg.chat_id].update({user.id: core.get_name(user)})
 
 
-def button_handler(bot: Bot, update: Update):
+def pages_handler(bot: Bot, update: Update):
     query = update.callback_query
-    data = query.data.split(':')
+    data = query.data.split(':')[1]
     msg = query.message
 
     if msg.chat_id in locks:
         query.answer("Нельзя использовать кнопки, пока идёт розыгрыш")
         return
 
-    if data[0] == 'top':
-        page_n = int(data[1].split('_')[1])
-        text, max_pages = core.make_top(msg.chat_id, page=page_n)
-        reply_keyboard = [[]]
-        if page_n != 1:
-            reply_keyboard[0].append(InlineKeyboardButton("<<", callback_data=f"top:page_{page_n - 1}"))
-        if page_n != max_pages:
-            reply_keyboard[0].append(InlineKeyboardButton(">>", callback_data=f"top:page_{page_n + 1}"))
-        try:
-            query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(reply_keyboard),
-                                    parse_mode=ParseMode.MARKDOWN)
-        except TelegramError:
-            pass
+    page_n = int(data.split('_')[1])
+    text, max_pages = core.make_top(msg.chat_id, page=page_n)
+    reply_keyboard = [[]]
+    if page_n != 1:
+        reply_keyboard[0].append(InlineKeyboardButton("<<", callback_data=f"top:page_{page_n - 1}"))
+    if page_n != max_pages:
+        reply_keyboard[0].append(InlineKeyboardButton(">>", callback_data=f"top:page_{page_n + 1}"))
+    try:
+        query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(reply_keyboard),
+                                parse_mode=ParseMode.MARKDOWN)
+    except TelegramError:
+        pass
 
 
 @core.check_destination
@@ -209,11 +208,11 @@ def top(bot: Bot, update: Update, args: list):
 @core.check_destination
 def change_spin_name(bot: Bot, update: Update, args: list):
     msg = core.get_message(update)
+    if len(args) == 0:
+        spin = core.spin_name.get(msg.chat_id, config.DEFAULT_SPIN_NAME)
+        msg.reply_text(text=f"Текущее название розыгрыша: *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
+        return
     if core.can_change_spin_name(msg.chat_id, msg.from_user.id, bot):
-        if len(args) == 0:
-            spin = core.spin_name.get(msg.chat_id, config.DEFAULT_SPIN_NAME)
-            msg.reply_text(text=f"Текущее название розыгрыша: *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
-        else:
             if args[-1].lower() == "дня" and len(args) > 1:
                 args.pop(-1)
             spin = " ".join(args)
@@ -280,7 +279,7 @@ dp.add_handler(CommandHandler('count', spin_count))
 dp.add_handler(CommandHandler('spin', do_the_spin))
 dp.add_handler(CommandHandler('stat', top, pass_args=True))
 dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
-dp.add_handler(CallbackQueryHandler(button_handler))
+dp.add_handler(CallbackQueryHandler(pages_handler, pattern="^top:page_[1-9]+[0-9]*$"))
 dp.add_handler(MessageHandler(Filters.all, update_cache, allow_edited=True), group=-1)
 
 dp.add_error_handler(handle_error)
