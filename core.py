@@ -58,23 +58,23 @@ def is_private(chat_id: int) -> bool:
     return chat_id > 0
 
 
-def not_pm(function: callable):
+def not_pm(f: callable):
     def wrapper(bot: Bot, update: Update, *args, **kwargs):
         msg = get_message(update)
         if is_private(msg.chat_id):
             msg.reply_text("Эта команда недоступна в ЛС")
             return
-        function(bot, update, *args, **kwargs)
+        f(bot, update, *args, **kwargs)
 
     return wrapper
 
 
-def check_destination(function: callable):
+def check_destination(f: callable):
     def wrapper(bot: Bot, update: Update, *args, **kwargs):
         msg = get_message(update)
         if not _check_destination(bot.username, msg.text):
             return
-        function(bot, update, *args, **kwargs)
+        f(bot, update, *args, **kwargs)
 
     return wrapper
 
