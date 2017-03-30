@@ -3,6 +3,7 @@ from datetime import datetime
 
 from telegram import (ChatMember, ParseMode, TelegramError,
                       User, Update, Message, Bot)
+from telegram.ext import Job, JobQueue
 from telegram.ext.dispatcher import run_async
 import logging
 
@@ -25,6 +26,8 @@ spin_name = {}
 can_change_name = {}
 results_today = {}
 results_total = {}
+auto_spins = {}
+auto_spin_jobs = {}
 
 announcement_chats = []
 log = None
@@ -32,9 +35,13 @@ file_handler = logging.FileHandler(config.LOG_FILE)
 file_handler.setFormatter(logging.Formatter(config.LOG_FILE_FORMAT, style='{'))
 
 
-def init(*, bot: Bot):
+def init(*, bot: Bot, job_queue: JobQueue, callback: callable):
     _load_all()
     _configure_logging(bot)
+    for chat in auto_spins:
+        job = Job(callback, 86400.0, context=auto_spins[chat])
+        job_queue.put(job, next_t=time_diff(auto_spins[chat]))
+        auto_spin_jobs.update({chat: job})
 
 
 def _configure_logging(bot: Bot):
@@ -98,6 +105,7 @@ def _save(obj: dict, filename: str):
 
 def _load_all():
     global chat_users, spin_name, can_change_name, results_today, results_total
+    global auto_spins
     if not __import__("os").path.exists("users.pkl"):
         return
     chat_users = _load("users.pkl")
@@ -105,6 +113,7 @@ def _load_all():
     can_change_name = _load("changers.pkl")
     results_today = _load("results.pkl")
     results_total = _load("total.pkl")
+    auto_spins = _load("auto.pkl")
 
 
 def save_all():
@@ -113,6 +122,7 @@ def save_all():
     _save(can_change_name, "changers.pkl")
     _save(results_today, "results.pkl")
     _save(results_total, "total.pkl")
+    _save(auto_spins, "auto.pkl")
 
 
 def clear_data(chat_id: int):
@@ -148,8 +158,8 @@ def is_user_left(chat_user: ChatMember) -> bool:
            chat_user.status == ChatMember.KICKED
 
 
-def time_diff() -> float:
-    t = RESET_TIME.split(':')
+def time_diff(t: str=config.RESET_TIME) -> float:
+    t = t.split(':')
     # now = datetime.now()
     now = datetime.utcnow()
     then = datetime(2017, 1, 1, int(t[0]), int(t[1]))

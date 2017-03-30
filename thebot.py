@@ -2,7 +2,8 @@ import logging
 
 from telegram import (Bot, Update, ParseMode, TelegramError,
                       InlineKeyboardMarkup, InlineKeyboardButton)
-from telegram.ext import Updater, Job, CommandHandler, MessageHandler, CallbackQueryHandler, Filters
+from telegram.ext import (Updater, Job, CommandHandler, MessageHandler,
+                          CallbackQueryHandler, Filters, JobQueue)
 from telegram.ext.dispatcher import run_async
 
 from random import choice
@@ -47,6 +48,13 @@ def reset(bot: Bot, job: Job=None):
 
 def auto_save(bot: Bot, job: Job):
     core.save_all()
+
+
+def auto_spin(bot: Bot, job: Job):
+    from telegram import Message, Chat, User
+    u = Update(0, message=Message(0, User(0, ''), 0, Chat(job.context, ''), text='/spin'))
+    if core.results_today.get(job.context) is None:
+        do_the_spin(bot, u)
 
 
 def update_cache(bot: Bot, update: Update):
@@ -179,6 +187,46 @@ def do_the_spin(bot: Bot, update: Update):
 
 @core.not_pm
 @core.check_destination
+def auto_spin_config(bot: Bot, update: Update, args: list, job_queue: JobQueue):
+    msg = core.get_message(update)
+    if len(args) == 0:
+        return
+    is_moder = core.can_change_spin_name(msg.chat_id, msg.from_user.id, bot)
+    cmd = args.pop(0)
+    if cmd == "set" and is_moder:
+        try:
+            time = args[0].split(':')
+            time = "{:0>2}:{:0>2}".format(time[0], time[1])
+            job = Job(auto_spin, 86400.0, context=msg.chat_id)
+            job_queue.put(job, next_t=core.time_diff(time))
+            if msg.chat_id in core.auto_spins:
+                core.auto_spin_jobs[msg.chat_id].schedule_removal()
+        except (ValueError, IndexError):
+            msg.reply_text(f"Ошибка! Проверьте время на правильность и отредактируйте сообщение")
+            return
+
+        core.auto_spins.update({msg.chat_id: time})
+        core.auto_spin_jobs.update({msg.chat_id: job})
+        msg.reply_text(f"Автоматический розыгрыш установлен на {time} GMT+0\n\n"
+        	           f"ВНИМАНИЕ! Если розыгрыш уже был проведён до того, как запустится автоматический розыгрыш, то"
+        	           f" бот не напишет ничего в чат по наступлению времени розыгрыша")
+    elif cmd == 'del' and is_moder:
+        if msg.chat_id in core.auto_spins:
+            core.auto_spin_jobs.pop(msg.chat_id).schedule_removal()
+            core.auto_spins.pop(msg.chat_id)
+            msg.reply_text("Теперь автоматический розыгрыш отключен в этом чате")
+        else:
+            msg.reply_text("Автоматический розыгрыш ещё не был включен в этом чате")
+    elif cmd == 'status':
+        if msg.chat_id in core.auto_spins:
+            msg.reply_text(f"Автоматический розыгрыш установлен в этом чате"
+                           f" на {core.auto_spins.get(msg.chat_id)} GMT+0")
+        else:
+            msg.reply_text("Автоматический розыгрыш отключен в этом чате")
+
+
+@core.not_pm
+@core.check_destination
 def top(bot: Bot, update: Update, args: list):
     chat_id = update.message.chat_id
     reply_keyboard = [[]]
@@ -277,6 +325,8 @@ dp.add_handler(CommandHandler('ping', ping))
 dp.add_handler(CommandHandler('setname', change_spin_name, pass_args=True, allow_edited=True))
 dp.add_handler(CommandHandler('count', spin_count))
 dp.add_handler(CommandHandler('spin', do_the_spin))
+dp.add_handler(CommandHandler('auto', auto_spin_config, pass_args=True, allow_edited=True,
+                              pass_job_queue=True))
 dp.add_handler(CommandHandler('stat', top, pass_args=True))
 dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
 dp.add_handler(CallbackQueryHandler(pages_handler, pattern="^top:page_[1-9]+[0-9]*$"))
@@ -284,7 +334,7 @@ dp.add_handler(MessageHandler(Filters.all, update_cache, allow_edited=True), gro
 
 dp.add_error_handler(handle_error)
 
-core.init(bot=updater.bot)
+core.init(bot=updater.bot, job_queue=updater.job_queue, callback=auto_spin)
 updater.start_polling(clean=True)
 log.info("Bot started")
 updater.idle()
