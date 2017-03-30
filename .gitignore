@@ -1,3 +1,4 @@
 *.pkl
 config.py
 !clean_dict.pkl
+/bot.log

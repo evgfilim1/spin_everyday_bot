@@ -4,8 +4,21 @@ from datetime import datetime
 from telegram import ChatMember, ParseMode, TelegramError
 from telegram import User, Update, Message, Bot
 from telegram.ext.dispatcher import run_async
+import logging
 
-from config import RESET_TIME, BOT_CREATOR, LOG_CHANNEL, TOP_PAGE_SIZE
+import config
+
+
+class TelegramHandler(logging.Handler):
+    def __init__(self, bot: Bot):
+        logging.Handler.__init__(self)
+        self.bot = bot
+
+    def emit(self, record):
+        if record.exc_info:
+            record.exc_text = f"\n_Exception brief info:_\n`{record.exc_info[0].__name__}: {record.exc_info[1]}`"
+        msg = self.format(record)
+        self.bot.send_message(chat_id=config.LOG_CHANNEL, text=msg, parse_mode=ParseMode.MARKDOWN)
 
 chat_users = {}
 spin_name = {}
@@ -14,6 +27,24 @@ results_today = {}
 results_total = {}
 
 announcement_chats = []
+log = None
+file_handler = logging.FileHandler(config.LOG_FILE)
+file_handler.setFormatter(logging.Formatter(config.LOG_FILE_FORMAT, style='{'))
+
+
+def init(*, bot: Bot):
+    _load_all()
+    _configure_logging(bot)
+
+
+def _configure_logging(bot: Bot):
+    global log
+    tg_handler = TelegramHandler(bot)
+    tg_handler.setFormatter(logging.Formatter(config.LOG_TG_FORMAT, style='{'))
+    log = logging.getLogger(__name__)
+    log.addHandler(file_handler)
+    log.addHandler(tg_handler)
+    log.setLevel(logging.DEBUG)
 
 
 def _check_destination(bot_name: str, message_text: str) -> bool:
@@ -55,36 +86,37 @@ def get_name(user: User) -> str:
         return user.first_name
 
 
-def load(filename: str) -> dict:
+def _load(filename: str) -> dict:
     with open(filename, 'rb') as ff:
         return pickle.load(ff)
 
 
-def save(obj: dict, filename: str):
+def _save(obj: dict, filename: str):
     with open(filename, 'wb') as ff:
         pickle.dump(obj, ff, pickle.HIGHEST_PROTOCOL)
 
 
-def load_all():
+def _load_all():
     global chat_users, spin_name, can_change_name, results_today, results_total
     if not __import__("os").path.exists("users.pkl"):
         return
-    chat_users = load("users.pkl")
-    spin_name = load("spin.pkl")
-    can_change_name = load("changers.pkl")
-    results_today = load("results.pkl")
-    results_total = load("total.pkl")
+    chat_users = _load("users.pkl")
+    spin_name = _load("spin.pkl")
+    can_change_name = _load("changers.pkl")
+    results_today = _load("results.pkl")
+    results_total = _load("total.pkl")
 
 
 def save_all():
-    save(chat_users, "users.pkl")
-    save(spin_name, "spin.pkl")
-    save(can_change_name, "changers.pkl")
-    save(results_today, "results.pkl")
-    save(results_total, "total.pkl")
+    _save(chat_users, "users.pkl")
+    _save(spin_name, "spin.pkl")
+    _save(can_change_name, "changers.pkl")
+    _save(results_today, "results.pkl")
+    _save(results_total, "total.pkl")
 
 
 def clear_data(chat_id: int):
+    log.debug(f"Clearing data of chat {chat_id}")
     chat_users.pop(chat_id)
     try:
         spin_name.pop(chat_id)
@@ -103,6 +135,7 @@ def clear_data(chat_id: int):
 
 
 def migrate(from_chat: int, to_chat: int):
+    log.debug(f"Migrating from {from_chat} to {to_chat}")
     chat_users.update({to_chat: chat_users.get(from_chat)})
     spin_name.update({to_chat: spin_name.get(from_chat)})
     can_change_name.update({to_chat: can_change_name.get(from_chat)})
@@ -135,8 +168,9 @@ def choose_random_user(chat_id: int, bot: Bot) -> str:
         member = bot.get_chat_member(chat_id=chat_id, user_id=user[0])
         if is_user_left(member):
             raise TelegramError("User left the group")
-    except TelegramError:
+    except TelegramError as e:
         chat_users[chat_id].pop(user[0])
+        log.info(f"{e}. User info: {user}, chat_id: {chat_id}")
         return choose_random_user(chat_id, bot)
     user = get_name(member.user)
     uid = member.user.id
@@ -154,10 +188,10 @@ def top_win(chat_id: int) -> list:
 
 def make_top(chat_id: int, *, page: int) -> (str, int):
     winners = top_win(chat_id)
-    total_pages = len(winners) // TOP_PAGE_SIZE
-    begin = (page - 1) * TOP_PAGE_SIZE
-    end = begin + TOP_PAGE_SIZE
-    if len(winners) % TOP_PAGE_SIZE != 0:
+    total_pages = len(winners) // config.TOP_PAGE_SIZE
+    begin = (page - 1) * config.TOP_PAGE_SIZE
+    end = begin + config.TOP_PAGE_SIZE
+    if len(winners) % config.TOP_PAGE_SIZE != 0:
         total_pages += 1
     text = f"Статистика пользователей в данном чате: (страница {page} из {total_pages})\n"
     for user in winners[begin:end]:
@@ -168,13 +202,7 @@ def make_top(chat_id: int, *, page: int) -> (str, int):
 
 def can_change_spin_name(chat_id: int, user_id: int, bot: Bot) -> bool:
     return user_id in get_admins_ids(bot, chat_id) or \
-           user_id in can_change_name[chat_id] or user_id == BOT_CREATOR
-
-
-def log_to_channel(bot: Bot, level: str, text: str):
-    bot.send_message(chat_id=LOG_CHANNEL, text="{lvl}:\n{txt}\n\n{time}".format(
-        lvl=level, txt=text, time=datetime.now()
-    ), parse_mode=ParseMode.MARKDOWN)
+           user_id in can_change_name[chat_id] or user_id == config.BOT_CREATOR
 
 
 @run_async
@@ -193,7 +221,7 @@ def announce(bot: Bot, text: str, md: bool = False):
                 bot.send_message(chat_id=chat, text=text)
             sleep_border -= 1
         except TelegramError:
-            log_to_channel(bot, "WARNING", f"Chat {chat} is not reachable for messages, deleting it")
+            log.warning(f"Chat {chat} is not reachable for messages, deleting it")
             chat_users.pop(chat)
             # pass
         if sleep_border == 0:
@@ -203,9 +231,7 @@ def announce(bot: Bot, text: str, md: bool = False):
 
 def get_admins_ids(bot: Bot, chat_id: int) -> list:
     admins = bot.get_chat_administrators(chat_id=chat_id)
-    result = []
-    for admin in admins:
-        result.append(admin.user.id)
+    result = [admin.user.id for admin in admins]
     return result
 
 
@@ -217,6 +243,3 @@ def fix_md(text: str) -> str:
         except AttributeError:
             break
     return text
-
-
-load_all()

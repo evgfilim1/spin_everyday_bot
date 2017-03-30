@@ -10,28 +10,39 @@ from random import choice
 import config
 import core
 
-TIME_FORMAT = "%d %b, %H:%M:%S"
-LOG_FORMAT = '%(levelname)-8s [%(asctime)s] %(message)s'
-logging.basicConfig(format=LOG_FORMAT, level=logging.INFO, datefmt=TIME_FORMAT)
-
 updater = Updater(config.BOT_TOKEN, workers=8)
 jobs = updater.job_queue
 dp = updater.dispatcher
 
 START_KEYBOARD = InlineKeyboardMarkup([
-    [InlineKeyboardButton(text="Написать боту", url="telegram.me/{}".format(updater.bot.username))]
+    [InlineKeyboardButton(text="Написать боту", url="t.me/{}".format(updater.bot.username))]
 ])
 
 locks = []
 
+tg_handler = core.TelegramHandler(updater.bot)
+tg_handler.setFormatter(logging.Formatter(config.LOG_TG_FORMAT, style='{'))
+
+log = logging.getLogger('bot')
+log.addHandler(core.file_handler)
+log.addHandler(tg_handler)
+log.setLevel(logging.DEBUG)
+
+# Just configure logger of dispatcher and updater and don't use them
+tg_log = logging.getLogger('telegram.ext')
+tg_log.addHandler(core.file_handler)
+tg_log.addHandler(tg_handler)
+tg_log.setLevel(logging.INFO)
+del tg_handler, tg_log
+
 
 def handle_error(bot: Bot, update: Update, error):
-    core.log_to_channel(bot, "WARNING", f"The last update caused error!\n```\n{error}\n```")
+    log.error(f"Update {update} caused error: {error}```")
 
 
 def reset(bot: Bot, job: Job=None):
     core.results_today.clear()
-    core.log_to_channel(bot, "INFO", "Reset done")
+    log.debug("Reset done")
 
 
 def auto_save(bot: Bot, job: Job):
@@ -52,6 +63,7 @@ def button_handler(bot: Bot, update: Update):
 
     if msg.chat_id in locks:
         query.answer("Нельзя использовать кнопки, пока идёт розыгрыш")
+        return
 
     if data[0] == 'top':
         page_n = int(data[1].split('_')[1])
@@ -72,6 +84,7 @@ def button_handler(bot: Bot, update: Update):
 def admin_shell(bot: Bot, update: Update, args: list):
     msg = core.get_message(update)
     if msg.from_user.id != config.BOT_CREATOR:
+        log.debug(f"Attempted to use '{msg.text}' by {core.get_name(msg.from_user)}")
         return
 
     try:
@@ -87,17 +100,22 @@ def admin_shell(bot: Bot, update: Update, args: list):
     elif cmd == "reset":
         reset(bot, None)
     elif cmd == "respin":
+        log.info(f"Respin done in '{msg.chat.title}' ({msg.chat_id})")
         core.results_today.pop(msg.chat_id)
         msg.reply_text("respin ok")
     elif cmd == "md_announce":
         core.announce(bot, " ".join(args), md=True)
     elif cmd == "announce":
         core.announce(bot, " ".join(args))
+    elif cmd == "sendlogs":
+        with open(config.LOG_FILE, 'rb') as f:
+            msg.reply_document(f)
     elif cmd == "help":
         msg.reply_text("Help:\nexec — execute code\nvardump — print variable's value\n"
                        "reset — reset all spins\nrespin — reset spin in this chat\n"
-                       "md_announce — tell smth. to all chats (markdown is on)\n"
-                       "announce — tell smth. to all chats (markdown is off)")
+                       "md_announce — tell something to all chats (markdown is on)\n"
+                       "announce — tell something to all chats (markdown is off)\n"
+                       "sendlogs — send latest logs as document")
 
 
 def svc_handler(bot: Bot, update: Update):
@@ -107,6 +125,7 @@ def svc_handler(bot: Bot, update: Update):
     left_member = update.message.left_chat_member
     if update.message.group_chat_created or (bool(new_member) and new_member.id == bot.id):
         # TODO: add admins to the list
+        log.debug(f"New chat! ({chat_id})")
         core.chat_users[chat_id] = {}
         core.can_change_name[chat_id] = []
     elif bool(new_member):
@@ -266,9 +285,10 @@ dp.add_handler(MessageHandler(Filters.all, update_cache, allow_edited=True), gro
 
 dp.add_error_handler(handle_error)
 
+core.init(bot=updater.bot)
 updater.start_polling(clean=True)
-core.log_to_channel(updater.bot, "INFO", "Bot started")
+log.info("Bot started")
 updater.idle()
 
 core.save_all()
-core.log_to_channel(updater.bot, "INFO", "Bot stopped")
+log.info("Bot stopped")

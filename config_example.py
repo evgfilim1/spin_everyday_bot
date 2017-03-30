@@ -60,5 +60,15 @@ RESET_TIME = "0:00"
 # Logging channel. You can put here "@telegramChannelName" or channel's ID
 LOG_CHANNEL = ""
 
+# Log file
+LOG_FILE = "bot.log"
+
+# Log formats. For more info, look 'https://docs.python.org/3/library/logging.html#logrecord-attributes'
+# Telegram logging format (message format that will be sent to `LOG_CHANNEL`)
+LOG_TG_FORMAT = "*{name}*: #{levelname}\n```\n{message}\n```\n\n{asctime}"
+
+# File logging format (message format that will be written in `LOG_FILE`
+LOG_FILE_FORMAT = '{levelname:<8} [{asctime}]: {name}: {message}'
+
 # Message that will be shown in group chats if the bot can't write in PM
 PM_ONLY_MESSAGE = "Для начала, запусти или разбань меня в ЛС"
