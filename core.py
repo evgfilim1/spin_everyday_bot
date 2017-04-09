@@ -35,6 +35,11 @@ file_handler = logging.FileHandler(config.LOG_FILE)
 file_handler.setFormatter(logging.Formatter(config.LOG_FILE_FORMAT, style='{'))
 
 
+def read_update(updater, update):
+    upd = Update.de_json(update, updater.bot)
+    updater.update_queue.put(upd)
+
+
 def init(*, bot: Bot, job_queue: JobQueue, callback: callable):
     _load_all()
     _configure_logging(bot)

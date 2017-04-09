@@ -1,5 +1,6 @@
 import logging
 
+from TeleSocketClient import TeleSocket
 from telegram import (Bot, Update, ParseMode, TelegramError,
                       InlineKeyboardMarkup, InlineKeyboardButton)
 from telegram.ext import (Updater, Job, CommandHandler, MessageHandler,
@@ -336,7 +337,20 @@ dp.add_handler(MessageHandler(Filters.all, update_cache, allow_edited=True), gro
 dp.add_error_handler(handle_error)
 
 core.init(bot=updater.bot, job_queue=updater.job_queue, callback=auto_spin)
-updater.start_polling(clean=True)
+
+if config.TELESOCKET_TOKEN:
+    # TODO: clean old messages
+    updater.bot.set_webhook()
+    sock = TeleSocket(daemonic=False)
+    sock.login(config.TELESOCKET_TOKEN)
+    sock.add_telegram_handler(lambda update: core.read_update(updater, update))
+    webhook = sock.set_webhook(updater.bot.username)
+    updater.bot.set_webhook(webhook_url=webhook.url)
+    updater.job_queue.start()
+    updater._init_thread(updater.dispatcher.start, "dispatcher")
+else:
+    updater.start_polling(clean=True)
+
 log.info("Bot started")
 updater.idle()
 

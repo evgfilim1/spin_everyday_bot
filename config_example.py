@@ -5,6 +5,10 @@
 # Your bot's token, which you can get from @BotFather
 BOT_TOKEN = "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi"
 
+# Your TeleSocket service token, which you can get from @TeleSocketBot
+# Set `None` if you don't want to use TeleSocket Service
+TELESOCKET_TOKEN = "1234567890abcdef1234567890abcdef1234567890abcdef"
+
 # Your Telegram User ID
 BOT_CREATOR = 123456987
 
