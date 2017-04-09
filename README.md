@@ -3,7 +3,7 @@
 ### Install guide:
 Check that you have `python3.6` and `python-pip` installed, then run this command in your shell:
 ```bash 
-$ sudo pip install python-telegram-bot
+$ sudo pip install -r requirements.txt
 ```
 
 If you don't know, how to create new bot in Telegram, google it, there are a lot of docs :)
