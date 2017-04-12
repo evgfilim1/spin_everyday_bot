@@ -1,6 +1,5 @@
 import logging
 
-from TeleSocketClient import TeleSocket
 from telegram import (Bot, Update, ParseMode, TelegramError,
                       InlineKeyboardMarkup, InlineKeyboardButton)
 from telegram.ext import (Updater, Job, CommandHandler, MessageHandler,
@@ -42,7 +41,7 @@ def handle_error(bot: Bot, update: Update, error):
     log.error(f"Update {update} caused error: {error}")
 
 
-def reset(bot: Bot, job: Job=None):
+def reset(bot: Bot, job: Job = None):
     core.results_today.clear()
     log.debug("Reset done")
 
@@ -210,8 +209,8 @@ def auto_spin_config(bot: Bot, update: Update, args: list, job_queue: JobQueue):
         core.auto_spins.update({msg.chat_id: time})
         core.auto_spin_jobs.update({msg.chat_id: job})
         msg.reply_text(f"Автоматический розыгрыш установлен на {time} GMT+0\n\n"
-        	           f"ВНИМАНИЕ! Если розыгрыш уже был проведён до того, как запустится автоматический розыгрыш, то"
-        	           f" бот не напишет ничего в чат по наступлению времени розыгрыша")
+                       f"ВНИМАНИЕ! Если розыгрыш уже был проведён до того, как запустится автоматический розыгрыш, то"
+                       f" бот не напишет ничего в чат по наступлению времени розыгрыша")
     elif cmd == 'del' and is_moder:
         if msg.chat_id in core.auto_spins:
             core.auto_spin_jobs.pop(msg.chat_id).schedule_removal()
@@ -263,11 +262,11 @@ def change_spin_name(bot: Bot, update: Update, args: list):
         msg.reply_text(text=f"Текущее название розыгрыша: *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
         return
     if core.can_change_spin_name(msg.chat_id, msg.from_user.id, bot):
-            if args[-1].lower() == "дня" and len(args) > 1:
-                args.pop(-1)
-            spin = " ".join(args)
-            core.spin_name[msg.chat_id] = spin
-            msg.reply_text(text=f"Текст розыгрыша изменён на *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
+        if args[-1].lower() == "дня" and len(args) > 1:
+            args.pop(-1)
+        spin = " ".join(args)
+        core.spin_name[msg.chat_id] = spin
+        msg.reply_text(text=f"Текст розыгрыша изменён на *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
 
 
 @core.not_pm
@@ -311,9 +310,9 @@ def admin_ctrl(bot: Bot, update: Update, args: list):
 @core.not_pm
 @core.check_destination
 def spin_count(bot: Bot, update: Update):
-    update.message.reply_text(text="Кол-во людей, участвующих в розыгрыше: _{}_".format(
-                                  len(core.chat_users[update.message.chat_id])
-                              ), parse_mode=ParseMode.MARKDOWN)
+    update.message.reply_text(text=f"Кол-во людей, участвующих в розыгрыше: "
+                                   f"_{len(core.chat_users[update.message.chat_id])}_",
+                              parse_mode=ParseMode.MARKDOWN)
 
 
 jobs.put(Job(auto_save, 60.0))
@@ -340,6 +339,7 @@ core.init(bot=updater.bot, job_queue=updater.job_queue, callback=auto_spin)
 
 if config.TELESOCKET_TOKEN:
     # TODO: clean old messages
+    from TeleSocketClient import TeleSocket
     updater.bot.set_webhook()
     sock = TeleSocket(daemonic=False)
     sock.login(config.TELESOCKET_TOKEN)
