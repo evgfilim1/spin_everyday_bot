@@ -92,7 +92,7 @@ def pages_handler(bot: Bot, update: Update):
 def admin_shell(bot: Bot, update: Update, args: list):
     msg = core.get_message(update)
     if msg.from_user.id != config.BOT_CREATOR:
-        log.debug(f"Attempted to use '{msg.text}' by {core.get_name(msg.from_user)}")
+        log.warning(f"Attempted to use '{msg.text}' by {core.get_name(msg.from_user)}")
         return
 
     try:
@@ -133,7 +133,7 @@ def svc_handler(bot: Bot, update: Update):
     left_member = update.message.left_chat_member
     if update.message.group_chat_created or (bool(new_member) and new_member.id == bot.id):
         # TODO: add admins to the list
-        log.debug(f"New chat! ({chat_id})")
+        log.info(f"New chat! ({chat_id})")
         core.chat_users[chat_id] = {}
         core.can_change_name[chat_id] = []
     elif bool(new_member):
@@ -145,7 +145,11 @@ def svc_handler(bot: Bot, update: Update):
     elif bool(left_member) and left_member.id == bot.id:
         core.clear_data(chat_id)
     elif bool(left_member):
-        core.chat_users[chat_id].pop(left_member.id)
+        try:
+            core.chat_users[chat_id].pop(left_member.id)
+        except KeyError:
+            # Passing this because of bots and unknown users
+            pass
 
 
 @core.check_destination

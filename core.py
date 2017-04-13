@@ -56,7 +56,7 @@ def _configure_logging(bot: Bot):
     log = logging.getLogger(__name__)
     log.addHandler(file_handler)
     log.addHandler(tg_handler)
-    log.setLevel(logging.DEBUG)
+    log.setLevel(logging.INFO)
 
 
 def _check_destination(bot_name: str, message_text: str) -> bool:
@@ -131,7 +131,7 @@ def save_all():
 
 
 def clear_data(chat_id: int):
-    log.debug(f"Clearing data of chat {chat_id}")
+    log.info(f"Clearing data of chat {chat_id}")
     chat_users.pop(chat_id)
     try:
         spin_name.pop(chat_id)
@@ -150,7 +150,7 @@ def clear_data(chat_id: int):
 
 
 def migrate(from_chat: int, to_chat: int):
-    log.debug(f"Migrating from {from_chat} to {to_chat}")
+    log.info(f"Migrating from {from_chat} to {to_chat}")
     chat_users.update({to_chat: chat_users.get(from_chat)})
     spin_name.update({to_chat: spin_name.get(from_chat)})
     can_change_name.update({to_chat: can_change_name.get(from_chat)})
@@ -188,7 +188,7 @@ def choose_random_user(chat_id: int, bot: Bot) -> str:
             raise TelegramError("User deleted from Telegram")
     except TelegramError as e:
         chat_users[chat_id].pop(user[0])
-        log.info(f"{e}. User info: {user}, chat_id: {chat_id}")
+        log.debug(f"{e}. User info: {user}, chat_id: {chat_id}")
         return choose_random_user(chat_id, bot)
     user = get_name(member.user)
     uid = member.user.id
