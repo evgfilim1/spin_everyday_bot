@@ -29,12 +29,17 @@ log.addHandler(core.file_handler)
 log.addHandler(tg_handler)
 log.setLevel(logging.DEBUG)
 
-# Just configure logger of dispatcher and updater and don't use them
+# Just configure loggers below and don't use them
 tg_log = logging.getLogger('telegram.ext')
 tg_log.addHandler(core.file_handler)
 tg_log.addHandler(tg_handler)
 tg_log.setLevel(logging.INFO)
-del tg_handler, tg_log
+
+sock_log = logging.getLogger('TeleSocket')
+sock_log.addHandler(core.file_handler)
+sock_log.addHandler(tg_handler)
+sock_log.setLevel(logging.INFO)
+del tg_handler, tg_log, sock_log
 
 
 def handle_error(bot: Bot, update: Update, error):
@@ -345,13 +350,14 @@ if config.TELESOCKET_TOKEN:
     # TODO: clean old messages
     from TeleSocketClient import TeleSocket
     updater.bot.set_webhook()
-    sock = TeleSocket(daemonic=False)
+    sock = TeleSocket()
     sock.login(config.TELESOCKET_TOKEN)
     sock.add_telegram_handler(lambda update: core.read_update(updater, update))
     webhook = sock.set_webhook(updater.bot.username)
     updater.bot.set_webhook(webhook_url=webhook.url)
     updater.job_queue.start()
     updater._init_thread(updater.dispatcher.start, "dispatcher")
+    updater.running = True
 else:
     updater.start_polling(clean=True)
 
