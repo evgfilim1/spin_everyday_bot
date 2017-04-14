@@ -97,16 +97,15 @@ Check that you're running this script as root or administrator""")
 
     try:
         import TeleSocketClient
+        del TeleSocketClient
     except ImportError:
-        if input("Do you want to use TeleSocket Service? (y/N): ").lower().strip() != "y":
-            pass
-        print("WARNING: 'TeleSocketClient' package is not installed. Installing...")
-        if pip_main(['install', 'TeleSocketClient']) != 0:
-            exit("""ERROR: An error occurred while installing packages.
-        Check that you're running this script as root or administrator""")
-        import TeleSocketClient
-
-    del TeleSocketClient
+        if input("Do you want to use TeleSocket Service? (y/N): ").lower().strip() == "y":
+            print("WARNING: 'TeleSocketClient' package is not installed. Installing...")
+            if pip_main(['install', 'TeleSocketClient']) != 0:
+                exit("""ERROR: An error occurred while installing packages.
+            Check that you're running this script as root or administrator""")
+            import TeleSocketClient
+            del TeleSocketClient
 
     if not path.exists("config.py"):
         print("WARNING: 'config.py' doesn't exist, copying example...")
