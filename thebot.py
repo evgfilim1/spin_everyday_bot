@@ -93,6 +93,21 @@ def pages_handler(bot: Bot, update: Update):
         pass
 
 
+def help_button_handler(bot: Bot, update: Update):
+    query = update.callback_query
+    data = query.data.split(':')[1]
+
+    keys = []
+    for key in config.HELP_TEXT[data][1]:
+        key = key.split('%')
+        keys.append([InlineKeyboardButton(text=key[0], callback_data=f"help:{key[1]}")])
+    try:
+        query.edit_message_text(config.HELP_TEXT[data][0], reply_markup=InlineKeyboardMarkup(keys),
+                                parse_mode=ParseMode.MARKDOWN)
+    except TelegramError:
+        pass
+
+
 @core.check_destination
 def admin_shell(bot: Bot, update: Update, args: list):
     msg = core.get_message(update)
@@ -159,9 +174,14 @@ def svc_handler(bot: Bot, update: Update):
 
 @core.check_destination
 def helper(bot: Bot, update: Update):
+    keys = []
+    for key in config.HELP_TEXT["main"][1]:
+        key = key.split('%')
+        keys.append([InlineKeyboardButton(text=key[0], callback_data=f"help:{key[1]}")])
+
     try:
-        bot.send_message(chat_id=update.message.from_user.id, text=config.HELP_TEXT,
-                         parse_mode=ParseMode.MARKDOWN)
+        bot.send_message(chat_id=update.message.from_user.id, text=config.HELP_TEXT["main"][0],
+                         parse_mode=ParseMode.MARKDOWN, reply_markup=InlineKeyboardMarkup(keys))
     except TelegramError:
         update.message.reply_text(text=config.PM_ONLY_MESSAGE, reply_markup=START_KEYBOARD)
 
@@ -340,6 +360,7 @@ dp.add_handler(CommandHandler('auto', auto_spin_config, pass_args=True, allow_ed
 dp.add_handler(CommandHandler('stat', top, pass_args=True))
 dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
 dp.add_handler(CallbackQueryHandler(pages_handler, pattern="^top:page_[1-9]+[0-9]*$"))
+dp.add_handler(CallbackQueryHandler(help_button_handler, pattern="^help:.+$"))
 dp.add_handler(MessageHandler(Filters.all, update_cache, allow_edited=True), group=-1)
 
 dp.add_error_handler(handle_error)
