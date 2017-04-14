@@ -224,8 +224,8 @@ def make_top(chat_id: int, *, page: int) -> (str, int):
 
 
 def can_change_spin_name(chat_id: int, user_id: int, bot: Bot) -> bool:
-    return user_id in get_admins_ids(bot, chat_id) or \
-           user_id in can_change_name[chat_id] or user_id == config.BOT_CREATOR
+    return user_id == config.BOT_CREATOR or user_id in get_admins_ids(bot, chat_id) or \
+           user_id in can_change_name.get(chat_id, [])
 
 
 @run_async
