@@ -16,6 +16,8 @@ class TelegramHandler(logging.Handler):
         self.bot = bot
 
     def emit(self, record):
+        if config.LOG_CHANNEL is None:
+            return
         if record.exc_info:
             record.exc_text = f"\n_Exception brief info:_\n`{record.exc_info[0].__name__}: {record.exc_info[1]}`"
         msg = self.format(record)
@@ -31,8 +33,11 @@ auto_spin_jobs = {}
 
 announcement_chats = []
 log = None
-file_handler = logging.FileHandler(config.LOG_FILE)
-file_handler.setFormatter(logging.Formatter(config.LOG_FILE_FORMAT, style='{'))
+if config.LOG_FILE is None:
+    handler = logging.StreamHandler()
+else:
+    handler = logging.FileHandler(config.LOG_FILE)
+handler.setFormatter(logging.Formatter(config.LOG_FORMAT, style='{'))
 
 
 def read_update(updater, update):
@@ -54,7 +59,7 @@ def _configure_logging(bot: Bot):
     tg_handler = TelegramHandler(bot)
     tg_handler.setFormatter(logging.Formatter(config.LOG_TG_FORMAT, style='{'))
     log = logging.getLogger(__name__)
-    log.addHandler(file_handler)
+    log.addHandler(handler)
     log.addHandler(tg_handler)
     log.setLevel(logging.INFO)
 

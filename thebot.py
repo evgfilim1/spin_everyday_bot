@@ -11,6 +11,9 @@ from random import choice
 import config
 import core
 
+# Set all logging time in UTC
+logging.Formatter.converter = __import__("time").gmtime
+
 updater = Updater(config.BOT_TOKEN, workers=8)
 jobs = updater.job_queue
 dp = updater.dispatcher
@@ -25,18 +28,18 @@ tg_handler = core.TelegramHandler(updater.bot)
 tg_handler.setFormatter(logging.Formatter(config.LOG_TG_FORMAT, style='{'))
 
 log = logging.getLogger('bot')
-log.addHandler(core.file_handler)
+log.addHandler(core.handler)
 log.addHandler(tg_handler)
 log.setLevel(logging.DEBUG)
 
 # Just configure loggers below and don't use them
 tg_log = logging.getLogger('telegram.ext')
-tg_log.addHandler(core.file_handler)
+tg_log.addHandler(core.handler)
 tg_log.addHandler(tg_handler)
 tg_log.setLevel(logging.INFO)
 
 sock_log = logging.getLogger('TeleSocket')
-sock_log.addHandler(core.file_handler)
+sock_log.addHandler(core.handler)
 sock_log.addHandler(tg_handler)
 sock_log.setLevel(logging.INFO)
 del tg_handler, tg_log, sock_log
@@ -136,6 +139,9 @@ def admin_shell(bot: Bot, update: Update, args: list):
     elif cmd == "announce":
         core.announce(bot, " ".join(args))
     elif cmd == "sendlogs":
+        if config.LOG_FILE is None:
+            msg.reply_text("Logging to file is not configured.")
+            return
         with open(config.LOG_FILE, 'rb') as f:
             msg.reply_document(f)
     elif cmd == "help":
