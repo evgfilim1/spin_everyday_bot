@@ -1,3 +1,7 @@
+# SpinEverydayBot
+# Copyright © 2016-2017 Evgeniy Filimonov <https://t.me/evgfilim1>
+# See full NOTICE at http://github.com/evgfilim1/spin_everyday_bot
+
 # This is example bot settings file.
 
 # You can find out necessary IDs from @ShowJsonBot
@@ -47,7 +51,9 @@ HELP_TEXT = {"main": ("*Привет!* Я бот, который делает е
              "commands": ("Выберите нужную команду, чтобы узнать подробнее о ней",
                           ("/setname%name", "/admgroup%admin", "/count%count", "/spin%spin", "/auto%auto",
                            "/stat%stat", "Назад%main")),
-             "about": ("*SpinEverydayBot v.1.5.1-beta*\nПо всем вопросам обращайтесь к <username>\n",
+             "about": ("*SpinEverydayBot v.1.5.1*\nПо всем вопросам обращайтесь к <username>\n"
+                       "Бот распространяется по лицензии [GNU AGPLv3](https://www.gnu.org/licenses/#AGPL)\n"
+                       "[Репозиторий бота](URL)",
                        ("Назад%main",)),
              "name": ("`/setname` — устанавливает название розыгрыша.\n_Использование:_\n"
                       "/setname — покажет текущее название розыгрыша\n"

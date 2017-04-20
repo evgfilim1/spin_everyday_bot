@@ -1,3 +1,7 @@
+# SpinEverydayBot
+# Copyright © 2016-2017 Evgeniy Filimonov <https://t.me/evgfilim1>
+# See full NOTICE at http://github.com/evgfilim1/spin_everyday_bot
+
 from os import path
 from shutil import copy
 from sys import version
