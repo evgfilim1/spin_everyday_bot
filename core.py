@@ -3,11 +3,11 @@
 # See full NOTICE at http://github.com/evgfilim1/spin_everyday_bot
 
 import pickle
-from datetime import datetime
+from datetime import time
 
 from telegram import (ChatMember, ParseMode, TelegramError,
-                      User, Update, Message, Bot)
-from telegram.ext import Job, JobQueue
+                      User, Update, Bot)
+from telegram.ext import JobQueue
 from telegram.ext.dispatcher import run_async
 import logging
 
@@ -53,8 +53,7 @@ def init(*, bot: Bot, job_queue: JobQueue, callback: callable):
     _load_all()
     _configure_logging(bot)
     for chat in auto_spins:
-        job = Job(callback, 86400.0, context=auto_spins[chat])
-        job_queue.put(job, next_t=time_diff(auto_spins[chat]))
+        job = job_queue.run_daily(callback, str_to_time(auto_spins[chat]), context=chat)
         auto_spin_jobs.update({chat: job})
 
 
@@ -68,43 +67,19 @@ def _configure_logging(bot: Bot):
     log.setLevel(logging.INFO)
 
 
-def _check_destination(bot_name: str, message_text: str) -> bool:
-    msg = message_text.split()
-    msg = msg[0].split('@')
-    msg.append('')
-    return msg[1] == bot_name or msg[1] == ''
-
-
 def is_private(chat_id: int) -> bool:
     return chat_id > 0
 
 
 def not_pm(f: callable):
     def wrapper(bot: Bot, update: Update, *args, **kwargs):
-        msg = get_message(update)
+        msg = update.effective_message
         if is_private(msg.chat_id):
             msg.reply_text("Эта команда недоступна в ЛС")
             return
         f(bot, update, *args, **kwargs)
 
     return wrapper
-
-
-def check_destination(f: callable):
-    def wrapper(bot: Bot, update: Update, *args, **kwargs):
-        msg = get_message(update)
-        if not _check_destination(bot.username, msg.text):
-            return
-        f(bot, update, *args, **kwargs)
-
-    return wrapper
-
-
-def get_name(user: User) -> str:
-    if bool(user.username):
-        return '@' + user.username
-    else:
-        return user.first_name
 
 
 def _load(filename: str) -> dict:
@@ -172,18 +147,13 @@ def is_user_left(chat_user: ChatMember) -> bool:
            chat_user.status == ChatMember.KICKED
 
 
-def time_diff(t: str=config.RESET_TIME) -> float:
-    t = t.split(':')
-    # now = datetime.now()
-    now = datetime.utcnow()
-    then = datetime(2017, 1, 1, int(t[0]), int(t[1]))
-    diff = then - now
-    delta = float(diff.seconds) + (diff.microseconds / 10 ** 6)
-    return delta
-
-
-def get_message(update: Update) -> Message:
-    return update.message or update.edited_message
+def str_to_time(s: str) -> time:
+    from datetime import datetime, timezone
+    t = s.split(':')
+    hours = int(t[0])
+    minutes = int(t[1])
+    offset = int(str(datetime.now(timezone.utc).astimezone().tzinfo))
+    return time((hours + offset) % 24, minutes, tzinfo=None)
 
 
 def choose_random_user(chat_id: int, bot: Bot) -> str:
@@ -193,13 +163,13 @@ def choose_random_user(chat_id: int, bot: Bot) -> str:
         member = bot.get_chat_member(chat_id=chat_id, user_id=user[0])
         if is_user_left(member):
             raise TelegramError("User left the group")
-        if get_name(member.user) == '':
+        if member.user.name == '':
             raise TelegramError("User deleted from Telegram")
     except TelegramError as e:
         chat_users[chat_id].pop(user[0])
         log.debug(f"{e}. User info: {user}, chat_id: {chat_id}")
         return choose_random_user(chat_id, bot)
-    user = get_name(member.user)
+    user = member.user.name
     uid = member.user.id
     results_today.update({chat_id: user})
     chat_users[chat_id].update({uid: user})
@@ -260,13 +230,3 @@ def get_admins_ids(bot: Bot, chat_id: int) -> list:
     admins = bot.get_chat_administrators(chat_id=chat_id)
     result = [admin.user.id for admin in admins]
     return result
-
-
-def fix_md(text: str) -> str:
-    md_symbols = '*_`['
-    for symbol in md_symbols:
-        try:
-            text = text.replace(symbol, '\\' + symbol)
-        except AttributeError:
-            break
-    return text

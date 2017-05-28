@@ -9,6 +9,7 @@ from telegram import (Bot, Update, ParseMode, TelegramError,
 from telegram.ext import (Updater, Job, CommandHandler, MessageHandler,
                           CallbackQueryHandler, Filters, JobQueue)
 from telegram.ext.dispatcher import run_async
+from telegram.utils.helpers import escape_markdown
 
 from random import choice
 
@@ -25,6 +26,7 @@ dp = updater.dispatcher
 START_KEYBOARD = InlineKeyboardMarkup([
     [InlineKeyboardButton(text="Написать боту", url="t.me/{}".format(updater.bot.username))]
 ])
+ALLOWED_UPDATES = ["message", "edited_message", "callback_query"]
 
 locks = []
 
@@ -53,28 +55,28 @@ def handle_error(bot: Bot, update: Update, error):
     log.error(f"Update {update} caused error: {error}")
 
 
-def reset(bot: Bot, job: Job = None):
+def reset(bot: Bot = None, job: Job = None):
     core.results_today.clear()
     log.debug("Reset done")
 
 
-def auto_save(bot: Bot, job: Job):
+def auto_save(bot: Bot = None, job: Job = None):
     core.save_all()
 
 
 def auto_spin(bot: Bot, job: Job):
-    from telegram import Message, Chat, User
-    u = Update(0, message=Message(0, User(0, ''), 0, Chat(job.context, ''), text='/spin'))
+    from telegram import Message, Chat
+    u = Update(0, message=Message(0, None, 0, Chat(job.context, '')))
     if core.results_today.get(job.context) is None:
         do_the_spin(bot, u)
 
 
 def update_cache(bot: Bot, update: Update):
-    msg = core.get_message(update)
-    user = msg.from_user
+    user = update.effective_user
+    chat_id = update.effective_message.chat_id
     # Also skip first update when the bot is added
-    if not core.is_private(msg.chat_id) and core.chat_users.get(msg.chat_id) is not None:
-        core.chat_users[msg.chat_id].update({user.id: core.get_name(user)})
+    if not core.is_private(chat_id) and core.chat_users.get(chat_id) is not None:
+        core.chat_users[chat_id].update({user.id: user.name})
 
 
 def pages_handler(bot: Bot, update: Update):
@@ -115,11 +117,10 @@ def help_button_handler(bot: Bot, update: Update):
         pass
 
 
-@core.check_destination
 def admin_shell(bot: Bot, update: Update, args: list):
-    msg = core.get_message(update)
+    msg = update.effective_message
     if msg.from_user.id != config.BOT_CREATOR:
-        log.warning(f"Attempted to use '{msg.text}' by {core.get_name(msg.from_user)}")
+        log.warning(f"Attempted to use '{msg.text}' by {msg.from_user.name}")
         return
 
     try:
@@ -159,22 +160,24 @@ def admin_shell(bot: Bot, update: Update, args: list):
 def svc_handler(bot: Bot, update: Update):
     chat_id = update.message.chat_id
     migrate_to_id = update.message.migrate_to_chat_id
-    new_member = update.message.new_chat_member
+    new_members = update.message.new_chat_members
     left_member = update.message.left_chat_member
-    if update.message.group_chat_created or (bool(new_member) and new_member.id == bot.id):
+    if update.message.group_chat_created or \
+            (len(new_members) != 0 and any(new_member.id == bot.id for new_member in new_members)):
         # TODO: add admins to the list
         log.info(f"New chat! ({chat_id})")
         core.chat_users[chat_id] = {}
         core.can_change_name[chat_id] = []
-    elif bool(new_member):
-        if bool(new_member.username) and new_member.username[-3:].lower() == "bot":
-            return
-        core.chat_users[chat_id].update({new_member.id: core.get_name(new_member)})
-    elif migrate_to_id != 0:
+    elif new_members:
+        for new_member in new_members:
+            if new_member.username and new_member.username[-3:].lower() == "bot":
+                return
+            core.chat_users[chat_id].update({new_member.id: new_member.name})
+    elif migrate_to_id:
         core.migrate(chat_id, migrate_to_id)
-    elif bool(left_member) and left_member.id == bot.id:
+    elif left_member and left_member.id == bot.id:
         core.clear_data(chat_id)
-    elif bool(left_member):
+    elif left_member:
         try:
             core.chat_users[chat_id].pop(left_member.id)
         except KeyError:
@@ -182,7 +185,6 @@ def svc_handler(bot: Bot, update: Update):
             pass
 
 
-@core.check_destination
 def helper(bot: Bot, update: Update):
     keys = []
     for key in config.HELP_TEXT["main"][1]:
@@ -196,17 +198,15 @@ def helper(bot: Bot, update: Update):
         update.message.reply_text(text=config.PM_ONLY_MESSAGE, reply_markup=START_KEYBOARD)
 
 
-@core.check_destination
 def ping(bot: Bot, update: Update):
     update.message.reply_text(text="Ping? Pong!")
 
 
 @run_async
 @core.not_pm
-@core.check_destination
 def do_the_spin(bot: Bot, update: Update):
     chat_id = update.message.chat_id
-    s = core.fix_md(core.spin_name.get(chat_id, config.DEFAULT_SPIN_NAME))
+    s = escape_markdown(core.spin_name.get(chat_id, config.DEFAULT_SPIN_NAME))
     p = core.results_today.get(chat_id)
     if chat_id in locks:
         return
@@ -214,7 +214,7 @@ def do_the_spin(bot: Bot, update: Update):
         bot.send_message(chat_id=chat_id, text=config.TEXT_ALREADY.format(s=s, n=p),
                          parse_mode=ParseMode.MARKDOWN)
     else:
-        p = core.fix_md(core.choose_random_user(chat_id, bot))
+        p = escape_markdown(core.choose_random_user(chat_id, bot))
         from time import sleep
         curr_text = choice(config.TEXTS)
         locks.append(chat_id)
@@ -226,9 +226,8 @@ def do_the_spin(bot: Bot, update: Update):
 
 
 @core.not_pm
-@core.check_destination
 def auto_spin_config(bot: Bot, update: Update, args: list, job_queue: JobQueue):
-    msg = core.get_message(update)
+    msg = update.effective_message
     if len(args) == 0:
         return
     is_moder = core.can_change_spin_name(msg.chat_id, msg.from_user.id, bot)
@@ -237,8 +236,7 @@ def auto_spin_config(bot: Bot, update: Update, args: list, job_queue: JobQueue):
         try:
             time = args[0].split(':')
             time = "{:0>2}:{:0>2}".format(time[0], time[1])
-            job = Job(auto_spin, 86400.0, context=msg.chat_id)
-            job_queue.put(job, next_t=core.time_diff(time))
+            job = job_queue.run_daily(auto_spin, core.str_to_time(time), context=msg.chat_id)
             if msg.chat_id in core.auto_spins:
                 core.auto_spin_jobs[msg.chat_id].schedule_removal()
         except (ValueError, IndexError):
@@ -266,7 +264,6 @@ def auto_spin_config(bot: Bot, update: Update, args: list, job_queue: JobQueue):
 
 
 @core.not_pm
-@core.check_destination
 def top(bot: Bot, update: Update, args: list):
     chat_id = update.message.chat_id
     reply_keyboard = [[]]
@@ -276,12 +273,12 @@ def top(bot: Bot, update: Update, args: list):
         core.results_total[chat_id] = {}
     if len(args) == 1 and args[0] == "me":
         user = update.message.from_user
-        username = core.get_name(user)
+        username = user.name
         stat = core.results_total[chat_id].get(user.id, 0)
         text = f"Ваша статистика:\n*{username}*: {stat} раз(а)"
     elif update.message.reply_to_message:
         user = update.message.reply_to_message.from_user
-        username = core.get_name(user)
+        username = user.name
         stat = core.results_total[chat_id].get(user.id, 0)
         text = f"Статистика пользователя *{username}*: {stat} раз(а)"
     else:
@@ -293,9 +290,8 @@ def top(bot: Bot, update: Update, args: list):
 
 
 @core.not_pm
-@core.check_destination
 def change_spin_name(bot: Bot, update: Update, args: list):
-    msg = core.get_message(update)
+    msg = update.effective_message
     if len(args) == 0:
         spin = core.spin_name.get(msg.chat_id, config.DEFAULT_SPIN_NAME)
         msg.reply_text(text=f"Текущее название розыгрыша: *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
@@ -309,9 +305,8 @@ def change_spin_name(bot: Bot, update: Update, args: list):
 
 
 @core.not_pm
-@core.check_destination
 def admin_ctrl(bot: Bot, update: Update, args: list):
-    msg = core.get_message(update)
+    msg = update.effective_message
     reply = msg.reply_to_message
     admins = core.get_admins_ids(bot, msg.chat_id)
     admins.append(config.BOT_CREATOR)
@@ -347,18 +342,16 @@ def admin_ctrl(bot: Bot, update: Update, args: list):
 
 
 @core.not_pm
-@core.check_destination
 def spin_count(bot: Bot, update: Update):
     update.message.reply_text(text=f"Кол-во людей, участвующих в розыгрыше: "
                                    f"_{len(core.chat_users[update.message.chat_id])}_",
                               parse_mode=ParseMode.MARKDOWN)
 
 
-jobs.put(Job(auto_save, 60.0))
-jobs.put(Job(reset, 86400.0), next_t=core.time_diff())
+jobs.run_repeating(auto_save, 60)
+jobs.run_daily(reset, core.str_to_time(config.RESET_TIME))
 
-dp.add_handler(CommandHandler('start', helper))
-dp.add_handler(CommandHandler('help', helper))
+dp.add_handler(CommandHandler(['start', 'help'], helper))
 dp.add_handler(CommandHandler('admgroup', admin_ctrl, pass_args=True, allow_edited=True))
 dp.add_handler(CommandHandler('sudo', admin_shell, pass_args=True, allow_edited=True))
 dp.add_handler(CommandHandler('ping', ping))
@@ -369,28 +362,28 @@ dp.add_handler(CommandHandler('auto', auto_spin_config, pass_args=True, allow_ed
                               pass_job_queue=True))
 dp.add_handler(CommandHandler('stat', top, pass_args=True))
 dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
-dp.add_handler(CallbackQueryHandler(pages_handler, pattern="^top:page_[1-9]+[0-9]*$"))
-dp.add_handler(CallbackQueryHandler(help_button_handler, pattern="^help:.+$"))
-dp.add_handler(MessageHandler(Filters.all, update_cache, allow_edited=True), group=-1)
+dp.add_handler(CallbackQueryHandler(pages_handler, pattern=r"^top:page_[1-9]+[0-9]*$"))
+dp.add_handler(CallbackQueryHandler(help_button_handler, pattern=r"^help:.+$"))
+dp.add_handler(MessageHandler(Filters.all, update_cache, edited_updates=True), group=-1)
 
 dp.add_error_handler(handle_error)
 
 core.init(bot=updater.bot, job_queue=updater.job_queue, callback=auto_spin)
 
 if config.TELESOCKET_TOKEN:
-    # TODO: clean old messages
     from TeleSocketClient import TeleSocket
     updater.bot.set_webhook()
     sock = TeleSocket()
     sock.login(config.TELESOCKET_TOKEN)
     sock.add_telegram_handler(lambda update: core.read_update(updater, update))
     webhook = sock.set_webhook(updater.bot.username)
-    updater.bot.set_webhook(webhook_url=webhook.url)
+    updater._clean_updates()
+    updater.bot.set_webhook(url=webhook.url, allowed_updates=ALLOWED_UPDATES)
     updater.job_queue.start()
     updater._init_thread(updater.dispatcher.start, "dispatcher")
     updater.running = True
 else:
-    updater.start_polling(clean=True)
+    updater.start_polling(clean=True, allowed_updates=ALLOWED_UPDATES)
 
 log.info("Bot started")
 updater.idle()
