@@ -5,9 +5,9 @@
 import logging
 
 from telegram import (Bot, Update, ParseMode, TelegramError,
-                      InlineKeyboardMarkup, InlineKeyboardButton)
+                      InlineKeyboardMarkup, InlineKeyboardButton, ForceReply, ReplyKeyboardRemove)
 from telegram.ext import (Updater, Job, CommandHandler, MessageHandler,
-                          CallbackQueryHandler, Filters, JobQueue)
+                          CallbackQueryHandler, Filters, JobQueue, ConversationHandler)
 from telegram.ext.dispatcher import run_async
 from telegram.utils.helpers import escape_markdown
 
@@ -120,7 +120,6 @@ def help_button_handler(bot: Bot, update: Update):
 def admin_shell(bot: Bot, update: Update, args: list):
     msg = update.effective_message
     if msg.from_user.id != config.BOT_CREATOR:
-        log.warning(f"Attempted to use '{msg.text}' by {msg.from_user.name}")
         return
 
     try:
@@ -149,12 +148,47 @@ def admin_shell(bot: Bot, update: Update, args: list):
             return
         with open(config.LOG_FILE, 'rb') as f:
             msg.reply_document(f)
+    elif cmd == "delete":
+        if len(args) == 0:
+            msg.reply_to_message.delete()
+        else:
+            params = args.pop(0).split('_')
+            if params[0] == "current":
+                params[0] = msg.chat_id
+            bot.delete_message(chat_id=params[0], message_id=params[1])
+    elif cmd == "count":
+        msg.reply_text(f"Чатов у бота: {len(core.chat_users)}")
+    elif cmd == "send" or cmd == "edit":
+        params = args.pop(0)
+        text = " ".join(args).replace("\\n", "\n")
+        params = params.split("_")
+        chat = params[0]
+        if chat == "current":
+            chat = msg.chat_id
+        try:
+            msg_id = params[1]
+            assert msg_id != ""
+        except (KeyError, AssertionError, IndexError):
+            msg_id = None
+        try:
+            parse_mode = params[2]
+        except (KeyError, IndexError):
+            parse_mode = None
+        del params
+        if cmd == "send":
+            new_msg = bot.send_message(chat, text, parse_mode=parse_mode, reply_to_message_id=msg_id)
+            msg.reply_text(f"Sent message ID: {new_msg.message_id}")
+        elif cmd == "edit":
+            bot.edit_message_text(chat_id=chat, text=text, parse_mode=parse_mode, message_id=msg_id)
     elif cmd == "help":
         msg.reply_text("Help:\nexec — execute code\nvardump — print variable's value\n"
+                       "delete [<chat>_<msgid>] - delete replied or specified message\n"
+                       "send <chat>_<msgid>_<parsemode> - send message\n"
+                       "edit <chat>_<msgid>_<parsemode> - edit message\n"
                        "reset — reset all spins\nrespin — reset spin in this chat\n"
-                       "md_announce — tell something to all chats (markdown is on)\n"
-                       "announce — tell something to all chats (markdown is off)\n"
-                       "sendlogs — send latest logs as document")
+                       "md_announce <text> — tell something to all chats (markdown is on)\n"
+                       "announce <text> — tell something to all chats (markdown is off)\n"
+                       "count - count known chats\nsendlogs — send latest logs as document")
 
 
 def svc_handler(bot: Bot, update: Update):
@@ -348,8 +382,41 @@ def spin_count(bot: Bot, update: Update):
                               parse_mode=ParseMode.MARKDOWN)
 
 
+def ask_feedback(bot: Bot, update: Update):
+    update.message.reply_text("Введите сообщение, которое будет отправлено создателю бота\n"
+                              "Бот принимает текст, изображения и документы\n"
+                              "Введите /cancel для отмены", reply_markup=ForceReply(selective=True))
+    return 0
+
+
+def send_feedback(bot: Bot, update: Update):
+    if update.message.reply_to_message.from_user.id != bot.id:
+        return
+    bot.send_message(config.BOT_CREATOR, f"<b>Новое сообщение!</b>\n"
+                                         f" - <i>Чат:</i> <pre>{update.message.chat}</pre>\n"
+                                         f" - <i>Пользователь:</i> <pre>{update.message.from_user}</pre>\n"
+                                         f" - <i>ID Сообщения:</i> <pre>{update.message.message_id}</pre>",
+                     parse_mode=ParseMode.HTML)
+    update.message.forward(config.BOT_CREATOR)
+    update.message.reply_text("Ваше сообщение отправлено!", reply_markup=ReplyKeyboardRemove(selective=True))
+    return ConversationHandler.END
+
+
+def cancel_feedback(bot: Bot, update: Update):
+    update.message.reply_text("Отменено", reply_markup=ReplyKeyboardRemove(selective=True))
+    return ConversationHandler.END
+
+
 jobs.run_repeating(auto_save, 60)
 jobs.run_daily(reset, core.str_to_time(config.RESET_TIME))
+
+feedback_handler = ConversationHandler(
+    entry_points=[CommandHandler('feedback', ask_feedback)],
+    states={
+        0: [MessageHandler(Filters.reply & (Filters.text | Filters.photo | Filters.document), send_feedback)]
+    },
+    fallbacks=[CommandHandler('cancel', cancel_feedback)]
+)
 
 dp.add_handler(CommandHandler(['start', 'help'], helper))
 dp.add_handler(CommandHandler('admgroup', admin_ctrl, pass_args=True, allow_edited=True))
@@ -361,6 +428,7 @@ dp.add_handler(CommandHandler('spin', do_the_spin))
 dp.add_handler(CommandHandler('auto', auto_spin_config, pass_args=True, allow_edited=True,
                               pass_job_queue=True))
 dp.add_handler(CommandHandler('stat', top, pass_args=True))
+dp.add_handler(feedback_handler)
 dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
 dp.add_handler(CallbackQueryHandler(pages_handler, pattern=r"^top:page_[1-9]+[0-9]*$"))
 dp.add_handler(CallbackQueryHandler(help_button_handler, pattern=r"^help:.+$"))
