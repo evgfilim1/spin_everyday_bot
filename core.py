@@ -152,7 +152,7 @@ def str_to_time(s: str) -> time:
     t = s.split(':')
     hours = int(t[0])
     minutes = int(t[1])
-    offset = int(str(datetime.now(timezone.utc).astimezone().tzinfo))
+    offset = datetime.now(timezone.utc).astimezone().tzinfo.utcoffset(None).seconds // 3600
     return time((hours + offset) % 24, minutes, tzinfo=None)
 
 
