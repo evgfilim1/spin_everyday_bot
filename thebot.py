@@ -236,6 +236,17 @@ def ping(bot: Bot, update: Update):
     update.message.reply_text(text="Ping? Pong!")
 
 
+@core.not_pm
+def do_the_sрin(bot: Bot, update: Update):
+    chat_id = update.message.chat_id
+    s = escape_markdown(core.spin_name.get(chat_id, config.DEFAULT_SPIN_NAME))
+    p = core.results_today.get(chat_id)
+    if p is None or chat_id in locks:
+        return
+    bot.send_message(chat_id=chat_id, text=config.TEXT_ALREADY.format(s=s, n=update.message.from_user.name),
+                     parse_mode=ParseMode.MARKDOWN)
+
+
 @run_async
 @core.not_pm
 def do_the_spin(bot: Bot, update: Update):
@@ -425,6 +436,7 @@ dp.add_handler(CommandHandler('ping', ping))
 dp.add_handler(CommandHandler('setname', change_spin_name, pass_args=True, allow_edited=True))
 dp.add_handler(CommandHandler('count', spin_count))
 dp.add_handler(CommandHandler('spin', do_the_spin))
+dp.add_handler(CommandHandler('sрin', do_the_sрin))
 dp.add_handler(CommandHandler('auto', auto_spin_config, pass_args=True, allow_edited=True,
                               pass_job_queue=True))
 dp.add_handler(CommandHandler('stat', top, pass_args=True))
