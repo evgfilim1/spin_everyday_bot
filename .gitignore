@@ -1,4 +1,3 @@
-*.pkl
+/data/*
+!/data/clean_dict.pkl
 config.py
-!clean_dict.pkl
-/bot.log

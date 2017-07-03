@@ -83,12 +83,12 @@ def not_pm(f: callable):
 
 
 def _load(filename: str) -> dict:
-    with open(filename, 'rb') as ff:
+    with open('data/' + filename, 'rb') as ff:
         return pickle.load(ff)
 
 
 def _save(obj: dict, filename: str):
-    with open(filename, 'wb') as ff:
+    with open('data/' + filename, 'wb') as ff:
         pickle.dump(obj, ff, pickle.HIGHEST_PROTOCOL)
 
 
