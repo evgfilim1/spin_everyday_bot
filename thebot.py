@@ -23,9 +23,6 @@ updater = Updater(config.BOT_TOKEN, workers=8)
 jobs = updater.job_queue
 dp = updater.dispatcher
 
-START_KEYBOARD = InlineKeyboardMarkup([
-    [InlineKeyboardButton(text="Написать боту", url="t.me/{}".format(updater.bot.username))]
-])
 ALLOWED_UPDATES = ["message", "edited_message", "callback_query"]
 
 locks = []
@@ -85,7 +82,7 @@ def pages_handler(bot: Bot, update: Update):
     msg = query.message
 
     if msg.chat_id in locks:
-        query.answer("Нельзя использовать кнопки, пока идёт розыгрыш")
+        query.answer(core.get_lang(msg.chat_id, 'locked_buttons'))
         return
 
     page_n = int(data.split('_')[1])
@@ -107,12 +104,12 @@ def help_button_handler(bot: Bot, update: Update):
     data = query.data.split(':')[1]
 
     keys = []
-    for key in config.HELP_TEXT[data][1]:
+    for key in core.get_lang(update.effective_chat.id, 'help_texts')[data][1]:
         key = key.split('%')
         keys.append([InlineKeyboardButton(text=key[0], callback_data=f"help:{key[1]}")])
     try:
-        query.edit_message_text(config.HELP_TEXT[data][0], reply_markup=InlineKeyboardMarkup(keys),
-                                parse_mode=ParseMode.MARKDOWN)
+        query.edit_message_text(core.get_lang(update.effective_chat.id, 'help_texts')[data][0],
+                                reply_markup=InlineKeyboardMarkup(keys), parse_mode=ParseMode.MARKDOWN)
     except TelegramError:
         pass
 
@@ -135,8 +132,12 @@ def admin_shell(bot: Bot, update: Update, args: list):
     elif cmd == "reset":
         reset(bot, None)
     elif cmd == "respin":
-        log.info(f"Respin done in '{msg.chat.title}' ({msg.chat_id})")
-        core.results_today.pop(msg.chat_id)
+        if len(args) > 0:
+            chat = int(args[0])
+        else:
+            chat = msg.chat_id
+        log.info(f"Respin done in {chat}")
+        core.results_today.pop(chat)
         msg.reply_text("respin ok")
     elif cmd == "md_announce":
         core.announce(bot, " ".join(args), md=True)
@@ -157,7 +158,7 @@ def admin_shell(bot: Bot, update: Update, args: list):
                 params[0] = msg.chat_id
             bot.delete_message(chat_id=params[0], message_id=params[1])
     elif cmd == "count":
-        msg.reply_text(f"Чатов у бота: {len(core.chat_users)}")
+        msg.reply_text(f"Bot has {len(core.chat_users)} chats")
     elif cmd == "send" or cmd == "edit":
         params = args.pop(0)
         text = " ".join(args).replace("\\n", "\n")
@@ -181,14 +182,14 @@ def admin_shell(bot: Bot, update: Update, args: list):
         elif cmd == "edit":
             bot.edit_message_text(chat_id=chat, text=text, parse_mode=parse_mode, message_id=msg_id)
     elif cmd == "help":
-        msg.reply_text("Help:\nexec — execute code\nvardump — print variable's value\n"
-                       "delete [<chat>_<msgid>] - delete replied or specified message\n"
-                       "send <chat>_<msgid>_<parsemode> - send message\n"
-                       "edit <chat>_<msgid>_<parsemode> - edit message\n"
-                       "reset — reset all spins\nrespin — reset spin in this chat\n"
-                       "md_announce <text> — tell something to all chats (markdown is on)\n"
-                       "announce <text> — tell something to all chats (markdown is off)\n"
-                       "count - count known chats\nsendlogs — send latest logs as document")
+        msg.reply_text("Help:\n- exec <code> — execute code\n- vardump <variable> — print variable's value\n"
+                       "- delete [<chat>_<msgid>] - delete replied or specified message\n"
+                       "- send <chat>_<msgid>_<parsemode> - send message\n"
+                       "- edit <chat>_<msgid>_<parsemode> - edit message\n"
+                       "- reset — reset all spins\n- respin [chat] — reset spin in this or specified chat\n"
+                       "- md_announce <text> — tell something to all chats (markdown is on)\n"
+                       "- announce <text> — tell something to all chats (markdown is off)\n"
+                       "- count - count known chats\n- sendlogs — send latest logs as document")
 
 
 def svc_handler(bot: Bot, update: Update):
@@ -220,30 +221,44 @@ def svc_handler(bot: Bot, update: Update):
 
 
 def helper(bot: Bot, update: Update):
+    chat_id = update.effective_chat.id
     keys = []
-    for key in config.HELP_TEXT["main"][1]:
+    for key in core.get_lang(chat_id, 'help_texts')["main"][1]:
         key = key.split('%')
         keys.append([InlineKeyboardButton(text=key[0], callback_data=f"help:{key[1]}")])
 
     try:
-        bot.send_message(chat_id=update.message.from_user.id, text=config.HELP_TEXT["main"][0],
+        bot.send_message(chat_id=update.message.from_user.id,
+                         text=core.get_lang(chat_id, 'help_texts')["main"][0],
                          parse_mode=ParseMode.MARKDOWN, reply_markup=InlineKeyboardMarkup(keys))
+        update.message.reply_text(core.get_lang(chat_id, 'check_pm'))
     except TelegramError:
-        update.message.reply_text(text=config.PM_ONLY_MESSAGE, reply_markup=START_KEYBOARD)
+        update.message.reply_text(text=core.get_lang(chat_id, 'pm_banned'),
+                                  reply_markup=InlineKeyboardMarkup([[
+                                      InlineKeyboardButton(core.get_lang(update.effective_chat.id, 'start_pm_button'),
+                                                           url=f't.me/{bot.username}')
+                                  ]]))
 
 
 def ping(bot: Bot, update: Update):
     update.message.reply_text(text="Ping? Pong!")
 
 
+def about(bot: Bot, update: Update):
+    update.message.reply_text(core.get_lang(update.effective_chat.id, 'about_text').format(
+        config.__version__, f'@{bot.get_chat(config.BOT_CREATOR).username}', config.REPO_URL
+    ), parse_mode=ParseMode.MARKDOWN)
+
+
 @core.not_pm
 def do_the_sрin(bot: Bot, update: Update):
     chat_id = update.message.chat_id
-    s = escape_markdown(core.spin_name.get(chat_id, config.DEFAULT_SPIN_NAME))
+    s = escape_markdown(core.spin_name.get(chat_id, core.get_lang(chat_id, 'default_spin_name')))
     p = core.results_today.get(chat_id)
     if p is None or chat_id in locks:
         return
-    bot.send_message(chat_id=chat_id, text=config.TEXT_ALREADY.format(s=s, n=update.message.from_user.name),
+    bot.send_message(chat_id=chat_id,
+                     text=core.get_lang(chat_id, 'already_spin').format(s=s, n=update.message.from_user.name),
                      parse_mode=ParseMode.MARKDOWN)
 
 
@@ -251,22 +266,26 @@ def do_the_sрin(bot: Bot, update: Update):
 @core.not_pm
 def do_the_spin(bot: Bot, update: Update):
     chat_id = update.message.chat_id
-    s = escape_markdown(core.spin_name.get(chat_id, config.DEFAULT_SPIN_NAME))
+    s = escape_markdown(core.spin_name.get(chat_id, core.get_lang(chat_id, 'default_spin_name')))
     p = core.results_today.get(chat_id)
     if chat_id in locks:
         return
     if p is not None:
-        bot.send_message(chat_id=chat_id, text=config.TEXT_ALREADY.format(s=s, n=p),
+        bot.send_message(chat_id=chat_id, text=core.get_lang(chat_id, 'already_spin').format(s=s, n=p),
                          parse_mode=ParseMode.MARKDOWN)
     else:
         p = escape_markdown(core.choose_random_user(chat_id, bot))
         from time import sleep
-        curr_text = choice(config.TEXTS)
+        curr_text = choice(core.get_lang(chat_id, 'default_spin_texts'))
         locks.append(chat_id)
-        for t in curr_text:
-            bot.send_message(chat_id=chat_id, text=t.format(s=s, n=p),
+        if core.get_config_key(chat_id, 'fast', False):
+            bot.send_message(chat_id=chat_id, text=curr_text[-1].format(s=s, n=p),
                              parse_mode=ParseMode.MARKDOWN)
-            sleep(2)
+        else:
+            for t in curr_text:
+                bot.send_message(chat_id=chat_id, text=t.format(s=s, n=p),
+                                 parse_mode=ParseMode.MARKDOWN)
+                sleep(2)
         locks.pop(locks.index(chat_id))
 
 
@@ -275,7 +294,7 @@ def auto_spin_config(bot: Bot, update: Update, args: list, job_queue: JobQueue):
     msg = update.effective_message
     if len(args) == 0:
         return
-    is_moder = core.can_change_spin_name(msg.chat_id, msg.from_user.id, bot)
+    is_moder = core.is_admin_for_bot(msg.chat_id, msg.from_user.id, bot)
     cmd = args.pop(0)
     if cmd == "set" and is_moder:
         try:
@@ -285,27 +304,26 @@ def auto_spin_config(bot: Bot, update: Update, args: list, job_queue: JobQueue):
             if msg.chat_id in core.auto_spins:
                 core.auto_spin_jobs[msg.chat_id].schedule_removal()
         except (ValueError, IndexError):
-            msg.reply_text(f"Ошибка! Проверьте время на правильность и отредактируйте сообщение")
+            msg.reply_text(core.get_lang(msg.chat_id, 'time_error'))
             return
 
         core.auto_spins.update({msg.chat_id: time})
         core.auto_spin_jobs.update({msg.chat_id: job})
-        msg.reply_text(f"Автоматический розыгрыш установлен на {time} GMT+0\n\n"
-                       f"ВНИМАНИЕ! Если розыгрыш уже был проведён до того, как запустится автоматический розыгрыш, то"
-                       f" бот не напишет ничего в чат по наступлению времени розыгрыша")
+        msg.reply_text(core.get_lang(update.effective_chat.id, 'auto_spin_on').format(time))
     elif cmd == 'del' and is_moder:
         if msg.chat_id in core.auto_spins:
             core.auto_spin_jobs.pop(msg.chat_id).schedule_removal()
             core.auto_spins.pop(msg.chat_id)
-            msg.reply_text("Теперь автоматический розыгрыш отключен в этом чате")
+            msg.reply_text(core.get_lang(msg.chat_id, 'auto_spin_set_off'))
         else:
-            msg.reply_text("Автоматический розыгрыш ещё не был включен в этом чате")
+            msg.reply_text(core.get_lang(msg.chat_id, 'auto_spin_still_off'))
     elif cmd == 'status':
         if msg.chat_id in core.auto_spins:
-            msg.reply_text(f"Автоматический розыгрыш установлен в этом чате"
-                           f" на {core.auto_spins.get(msg.chat_id)} GMT+0")
+            msg.reply_text(core.get_lang(msg.chat_id, 'auto_spin_on').format(core.auto_spins.get(msg.chat_id)))
         else:
-            msg.reply_text("Автоматический розыгрыш отключен в этом чате")
+            msg.reply_text(core.get_lang(msg.chat_id, 'auto_spin_off'))
+    elif not is_moder:
+        msg.reply_text(core.get_lang(msg.chat_id, 'not_admin'))
 
 
 @core.not_pm
@@ -320,12 +338,12 @@ def top(bot: Bot, update: Update, args: list):
         user = update.message.from_user
         username = user.name
         stat = core.results_total[chat_id].get(user.id, 0)
-        text = f"Ваша статистика:\n*{username}*: {stat} раз(а)"
+        text = core.get_lang(chat_id, 'stats_me').format(username, stat)
     elif update.message.reply_to_message:
         user = update.message.reply_to_message.from_user
         username = user.name
         stat = core.results_total[chat_id].get(user.id, 0)
-        text = f"Статистика пользователя *{username}*: {stat} раз(а)"
+        text = core.get_lang(chat_id, 'stats_user').format(username, stat)
     else:
         text, pages = core.make_top(chat_id, page=1)
         if pages > 1:
@@ -338,15 +356,19 @@ def top(bot: Bot, update: Update, args: list):
 def change_spin_name(bot: Bot, update: Update, args: list):
     msg = update.effective_message
     if len(args) == 0:
-        spin = core.spin_name.get(msg.chat_id, config.DEFAULT_SPIN_NAME)
-        msg.reply_text(text=f"Текущее название розыгрыша: *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
+        spin = core.spin_name.get(msg.chat_id, core.get_lang(msg.chat_id, 'default_spin_name'))
+        msg.reply_text(text=core.get_lang(msg.chat_id, 'spin_name_current').format(spin),
+                       parse_mode=ParseMode.MARKDOWN)
         return
-    if core.can_change_spin_name(msg.chat_id, msg.from_user.id, bot):
-        if args[-1].lower() == "дня" and len(args) > 1:
+    if core.is_admin_for_bot(msg.chat_id, msg.from_user.id, bot):
+        if args[-1].lower() == core.get_lang(msg.chat_id, 'spin_suffix') and len(args) > 1:
             args.pop(-1)
         spin = " ".join(args)
         core.spin_name[msg.chat_id] = spin
-        msg.reply_text(text=f"Текст розыгрыша изменён на *{spin} дня*", parse_mode=ParseMode.MARKDOWN)
+        msg.reply_text(text=core.get_lang(msg.chat_id, 'spin_name_changed').format(spin),
+                       parse_mode=ParseMode.MARKDOWN)
+    else:
+        msg.reply_text(core.get_lang(msg.chat_id, 'not_admin'))
 
 
 @core.not_pm
@@ -362,59 +384,139 @@ def admin_ctrl(bot: Bot, update: Update, args: list):
     if msg.chat_id not in core.can_change_name:
         core.can_change_name[msg.chat_id] = []
     if cmd == "add" and reply and is_admin:
-        if core.can_change_spin_name(msg.chat_id, reply.from_user.id, bot):
-            msg.reply_text(text="Этот пользователь *уже может* изменять название розыгрыша",
+        if core.is_admin_for_bot(msg.chat_id, reply.from_user.id, bot):
+            msg.reply_text(text=core.get_lang(msg.chat_id, 'admin_still_allow'),
                            parse_mode=ParseMode.MARKDOWN)
         else:
             core.can_change_name[msg.chat_id].append(reply.from_user.id)
-            msg.reply_text(text="Теперь этот пользователь *может* изменять название розыгрыша",
+            msg.reply_text(text=core.get_lang(msg.chat_id, 'admin_allow'),
                            parse_mode=ParseMode.MARKDOWN)
     elif cmd == "del" and reply and is_admin:
-        if not core.can_change_spin_name(msg.chat_id, reply.from_user.id, bot):
-            msg.reply_text(text="Этот пользователь *ещё не может* изменять название розыгрыша",
+        if not core.is_admin_for_bot(msg.chat_id, reply.from_user.id, bot):
+            msg.reply_text(text=core.get_lang(msg.chat_id, 'admin_still_deny'),
                            parse_mode=ParseMode.MARKDOWN)
         else:
             index = core.can_change_name[msg.chat_id].index(reply.from_user.id)
             core.can_change_name[msg.chat_id].pop(index)
-            msg.reply_text(text="Теперь этот пользователь *не может* изменять название розыгрыша",
+            msg.reply_text(text=core.get_lang(msg.chat_id, 'admin_deny'),
                            parse_mode=ParseMode.MARKDOWN)
     elif cmd == "list":
-        text = "Пользователи, которые *могут* изменять название розыгрыша (не считая администраторов):\n```\n"
+        users = ""
         for user in core.can_change_name[msg.chat_id]:
-            text += core.chat_users[msg.chat_id].get(user, f"id{user}") + '\n'
-        text += "```"
+            users += core.chat_users[msg.chat_id].get(user, f"id{user}") + '\n'
+        text = core.get_lang(msg.chat_id, 'admin_list').format(users)
         msg.reply_text(text, parse_mode=ParseMode.MARKDOWN)
 
 
 @core.not_pm
 def spin_count(bot: Bot, update: Update):
-    update.message.reply_text(text=f"Кол-во людей, участвующих в розыгрыше: "
-                                   f"_{len(core.chat_users[update.message.chat_id])}_",
+    update.message.reply_text(text=core.get_lang(update.effective_chat.id,
+                                                 'user_count').format(len(core.chat_users[update.message.chat_id])),
                               parse_mode=ParseMode.MARKDOWN)
 
 
+def settings(bot: Bot, update: Update):
+    if update.callback_query:
+        callback = True
+        chat_id = -int(update.callback_query.data.split(':')[1])
+        chat_title = bot.get_chat(chat_id).title
+    else:
+        callback = False
+        chat_id = update.effective_chat.id
+        chat_title = update.effective_chat.title
+    keyboard = [[InlineKeyboardButton(core.get_lang(chat_id, 'settings_lang'),
+                                      callback_data=f'settings:{-chat_id}:lang:'),
+                 InlineKeyboardButton(core.get_lang(chat_id, 'settings_fast_spin'),
+                                      callback_data=f'settings:{-chat_id}:fast:')]]
+    if callback:
+        update.effective_message.edit_text(core.get_lang(chat_id, 'settings').format(chat_title),
+                                           reply_markup=InlineKeyboardMarkup(keyboard))
+    else:
+        if core.is_private(chat_id):
+            update.message.reply_text(core.get_lang(chat_id, 'not_in_pm'))
+            return
+        user_id = update.effective_user.id
+        if core.is_admin_for_bot(chat_id, user_id, bot):
+            try:
+                bot.send_message(user_id, core.get_lang(chat_id, 'settings').format(chat_title),
+                                 reply_markup=InlineKeyboardMarkup(keyboard))
+                update.message.reply_text(core.get_lang(chat_id, 'check_pm'))
+            except TelegramError:
+                update.message.reply_text(text=core.get_lang(chat_id, 'pm_banned'),
+                                          reply_markup=InlineKeyboardMarkup([[
+                                              InlineKeyboardButton(
+                                                  core.get_lang(update.effective_chat.id, 'start_pm_button'),
+                                                  url=f't.me/{bot.username}')
+                                          ]]))
+        else:
+            update.message.reply_text(core.get_lang(chat_id, 'not_admin'))
+
+
+def lang_handler(bot: Bot, update: Update):
+    chosen_lang = update.callback_query.data.split(':')[-1]
+    chat_id = -int(update.callback_query.data.split(':')[1])
+    if chosen_lang != "":
+        core.update_config(chat_id, 'lang', chosen_lang)
+        update.callback_query.answer(core.get_lang(chat_id, 'settings_changed'))
+        return
+    lang = []
+    for i, (key, item) in enumerate(core.languages.items()):
+        button = InlineKeyboardButton(item.get('_name', key), callback_data=f'settings:{-chat_id}:lang:{key}')
+        if i % 2 == 0:
+            lang.append([button])
+        else:
+            lang[-1].append(button)
+    lang.append([InlineKeyboardButton(core.get_lang(chat_id, 'settings_back'),
+                                      callback_data=f'settings:{-chat_id}:main:')])
+    update.effective_message.edit_text(core.get_lang(chat_id, 'settings_lang_prompt'),
+                                       reply_markup=InlineKeyboardMarkup(lang))
+
+
+def fast_handler(bot: Bot, update: Update):
+    chosen_option = update.callback_query.data.split(':')[-1]
+    chat_id = -int(update.callback_query.data.split(':')[1])
+    if chosen_option != "":
+        chosen_option = bool(int(chosen_option))  # converting '1' to True, '0' to False
+        core.update_config(chat_id, 'fast', chosen_option)
+        update.callback_query.answer(core.get_lang(chat_id, 'settings_changed'))
+    opts = []
+    if core.get_config_key(chat_id, 'fast', False):
+        status = core.get_lang(chat_id, 'settings_on')
+        opts.append([InlineKeyboardButton(core.get_lang(chat_id, 'settings_turn_off'),
+                                          callback_data=f'settings:{-chat_id}:fast:0')])
+    else:
+        status = core.get_lang(chat_id, 'settings_off')
+        opts.append([InlineKeyboardButton(core.get_lang(chat_id, 'settings_turn_on'),
+                                          callback_data=f'settings:{-chat_id}:fast:1')])
+    opts.append([InlineKeyboardButton(core.get_lang(chat_id, 'settings_back'),
+                                      callback_data=f'settings:{-chat_id}:main:')])
+    update.effective_message.edit_text(core.get_lang(chat_id, 'settings_fast_spin_caption').format(status),
+                                       reply_markup=InlineKeyboardMarkup(opts))
+
+
 def ask_feedback(bot: Bot, update: Update):
-    update.message.reply_text("Введите сообщение, которое будет отправлено создателю бота\n"
-                              "Бот принимает текст, изображения и документы\n"
-                              "Введите /cancel для отмены", reply_markup=ForceReply(selective=True))
+    update.message.reply_text(core.get_lang(update.effective_chat.id, 'feedback_prompt'),
+                              reply_markup=ForceReply(selective=True))
     return 0
 
 
 def send_feedback(bot: Bot, update: Update):
     if update.message.reply_to_message.from_user.id != bot.id:
         return
-    bot.send_message(config.BOT_CREATOR, f"<b>Новое сообщение!</b>\n"
-                                         f" - <i>Чат:</i> <pre>{update.message.chat}</pre>\n"
-                                         f" - <i>Пользователь:</i> <pre>{update.message.from_user}</pre>\n"
-                                         f" - <i>ID Сообщения:</i> <pre>{update.message.message_id}</pre>",
+    bot.send_message(config.BOT_CREATOR, f"<b>New message!</b>\n"
+                                         f" - <i>Chat:</i> <pre>{update.message.chat}</pre>\n"
+                                         f" - <i>User:</i> <pre>{update.message.from_user}</pre>\n"
+                                         f" - <i>Message ID:</i> <pre>{update.message.message_id}</pre>",
                      parse_mode=ParseMode.HTML)
     update.message.forward(config.BOT_CREATOR)
-    update.message.reply_text("Ваше сообщение отправлено!", reply_markup=ReplyKeyboardRemove(selective=True))
+    update.message.reply_text(core.get_lang(update.effective_chat.id, 'feedback_sent'),
+                              reply_markup=ReplyKeyboardRemove(selective=True))
     return ConversationHandler.END
 
 
 def cancel_feedback(bot: Bot, update: Update):
-    update.message.reply_text("Отменено", reply_markup=ReplyKeyboardRemove(selective=True))
+    update.message.reply_text(core.get_lang(update.effective_chat.id, 'feedback_cancelled'),
+                              reply_markup=ReplyKeyboardRemove(selective=True))
     return ConversationHandler.END
 
 
@@ -430,6 +532,7 @@ feedback_handler = ConversationHandler(
 )
 
 dp.add_handler(CommandHandler(['start', 'help'], helper))
+dp.add_handler(CommandHandler('about', about))
 dp.add_handler(CommandHandler('admgroup', admin_ctrl, pass_args=True, allow_edited=True))
 dp.add_handler(CommandHandler('sudo', admin_shell, pass_args=True, allow_edited=True))
 dp.add_handler(CommandHandler('ping', ping))
@@ -440,10 +543,14 @@ dp.add_handler(CommandHandler('sрin', do_the_sрin))
 dp.add_handler(CommandHandler('auto', auto_spin_config, pass_args=True, allow_edited=True,
                               pass_job_queue=True))
 dp.add_handler(CommandHandler('stat', top, pass_args=True))
+dp.add_handler(CommandHandler('settings', settings))
 dp.add_handler(feedback_handler)
 dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
 dp.add_handler(CallbackQueryHandler(pages_handler, pattern=r"^top:page_[1-9]+[0-9]*$"))
 dp.add_handler(CallbackQueryHandler(help_button_handler, pattern=r"^help:.+$"))
+dp.add_handler(CallbackQueryHandler(settings, pattern=r"^settings:\d+:main:$"))
+dp.add_handler(CallbackQueryHandler(lang_handler, pattern=r"^settings:\d+:lang:[a-z]*$"))
+dp.add_handler(CallbackQueryHandler(fast_handler, pattern=r"settings:\d+:fast:[01]?"))
 dp.add_handler(MessageHandler(Filters.all, update_cache, edited_updates=True), group=-1)
 
 dp.add_error_handler(handle_error)

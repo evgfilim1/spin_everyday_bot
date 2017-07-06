@@ -6,6 +6,12 @@
 
 # You can find out necessary IDs from @ShowJsonBot
 
+# Version string for bot
+__version__ = '1.5.1-dev'
+
+# Repository URL to be shown in /about
+REPO_URL = "https://github.com/evgfilim1/spin_everyday_bot"
+
 # Your bot's token, which you can get from @BotFather
 BOT_TOKEN = "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi"
 
@@ -16,64 +22,8 @@ TELESOCKET_TOKEN = "1234567890abcdef1234567890abcdef1234567890abcdef"
 # Your Telegram User ID
 BOT_CREATOR = 123456987
 
-# Default name of spin
-DEFAULT_SPIN_NAME = "ноунейм"
-
-# Spin texts
-# {s} is replaced with name of spin and {n} -- with user name
-TEXTS = [["Итак, кто же сегодня *{s} дня*?", "_Хмм, интересно..._", "*АГА!*",
-         "Сегодня ты *{s} дня,* {n}"],
-         ["*Колесо Сансары запущено!*", "_Что за дичь?!_", "Ну ок...",
-          "Поздравляю, ты *{s} дня,* {n}"],
-         ["Кручу-верчу, *наебать* хочу", "Сегодня ты *{s} дня*, @spin\_everyday\_bot",
-          "_(нет)_", "На самом деле, это {n}"],
-         ["Эмм... Ты уверен?", "Ты *точно* уверен?", "Хотя ладно, процесс уже необратим",
-          "Сегодня я назначаю тебе должность *{s} дня*, {n}!"],
-         ["_Ищем рандомного кота на улице..._", "_Ищем палку..._", "_Ищем шапку..._", "_Рисуем ASCII-арт..._",
-          "*Готово!*", """```
-.∧＿∧
-( ･ω･｡)つ━☆・*。
-⊂　 ノ 　　　・゜+.
-しーＪ　　　°。+ *´¨)
-　　　　　　　　　.· ´¸.·*´¨) ¸.·*¨)
-　　　　　　　　　　(¸.·´ (¸.·'* ☆ ВЖУХ, И ТЫ {s} ДНЯ,```{n}
-"""]]
-
-# Text that shows if spin was done already
-TEXT_ALREADY = "Согласно сегодняшнему розыгрышу, *{s} дня* — `{n}`"
-
 # How much users will be shown on one page of top
 TOP_PAGE_SIZE = 10
-
-# Help text
-HELP_TEXT = {"main": ("*Привет!* Я бот, который делает ежедневные розыгрыши. Чтобы узнать о моих возможностях, "
-             "выберите пункт меню", ("Команды%commands", "О боте%about")),
-             "commands": ("Выберите нужную команду, чтобы узнать подробнее о ней",
-                          ("/setname%name", "/admgroup%admin", "/count%count", "/spin%spin", "/auto%auto",
-                           "/stat%stat", "Назад%main")),
-             "about": ("*SpinEverydayBot v.1.5.1*\nПо всем вопросам обращайтесь к <username>\n"
-                       "Бот распространяется по лицензии [GNU AGPLv3](https://www.gnu.org/licenses/#AGPL)\n"
-                       "[Репозиторий бота](URL)",
-                       ("Назад%main",)),
-             "name": ("`/setname` — устанавливает название розыгрыша.\n_Использование:_\n"
-                      "/setname — покажет текущее название розыгрыша\n"
-                      "/setname TEXT — установит названием розыгрыша `TEXT`", ("Назад%commands",)),
-             "admin": ("`/admgroup` — управляет правами.\n_Использование:_\n"
-                       "/admgroup add — разрешает пользователю выполнять административные операции\n"
-                       "/admgroup del — запрещает пользователю выполнять административные операции\n"
-                       "/admgroup list — показывает список тех, кто может выполнять административные операции",
-                       ("Назад%commands",)),
-             "count": ("`/count` — считает кол-во пользователей, принимающих участие в розыгрыше",
-                       ("Назад%commands",)),
-             "spin": ("`/spin` — запускает розыгрыш. Если розыгрыш уже был запущен в течение текущего дня, "
-                      "показывает результат.", ("Назад%commands",)),
-             "auto": ("`/auto` - управление автоматическими розыгрышами.\n_Использование:_\n"
-                      "/auto set TIME — устанавливает розыгрыш на `TIME` GMT+0 (MSK-3). Формат времени: `hh:mm`\n"
-                      "/auto del — отключает автоматический розыгрыш\n"
-                      "/auto status — просмотр состояния и времени автоматического розыгрыша", ("Назад%commands",)),
-             "stat": ("`/stat` — просмотр статистики в чате.\n_Использование:_\n"
-                      "/stat — просмотр статистики всего чата или конкретного пользователя\n"
-                      "/stat me — просмотр собственной статистики", ("Назад%commands",))}
 
 # Time of resetting spin results (in GMT)
 RESET_TIME = "21:00"
@@ -93,5 +43,5 @@ LOG_TG_FORMAT = "*{name}*: #{levelname}\n```\n{message}\n```\n\n{asctime}"
 # Logging format (message format that will be written in `LOG_FILE` or console)
 LOG_FORMAT = '{levelname:<8} [{asctime}]: {name}: {message}'
 
-# Message that will be shown in group chats if the bot can't write in PM
-PM_ONLY_MESSAGE = "Для начала, запусти или разбань меня в ЛС"
+# If specified key is missing from language file, translation will fallback to this language
+FALLBACK_LANG = "ru"

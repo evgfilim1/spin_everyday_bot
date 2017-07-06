@@ -5,8 +5,7 @@
 import pickle
 from datetime import time
 
-from telegram import (ChatMember, ParseMode, TelegramError,
-                      User, Update, Bot)
+from telegram import (ChatMember, ParseMode, TelegramError, Update, Bot)
 from telegram.ext import JobQueue
 from telegram.ext.dispatcher import run_async
 import logging
@@ -16,7 +15,7 @@ import config
 
 class TelegramHandler(logging.Handler):
     def __init__(self, bot: Bot):
-        logging.Handler.__init__(self)
+        super(TelegramHandler, self).__init__()
         self.bot = bot
 
     def emit(self, record):
@@ -34,6 +33,8 @@ results_today = {}
 results_total = {}
 auto_spins = {}
 auto_spin_jobs = {}
+chat_config = {}
+languages = {}
 
 announcement_chats = []
 log = None
@@ -75,7 +76,7 @@ def not_pm(f: callable):
     def wrapper(bot: Bot, update: Update, *args, **kwargs):
         msg = update.effective_message
         if is_private(msg.chat_id):
-            msg.reply_text("Эта команда недоступна в ЛС")
+            msg.reply_text(get_lang(msg.chat_id, 'not_in_pm'))
             return
         f(bot, update, *args, **kwargs)
 
@@ -83,26 +84,41 @@ def not_pm(f: callable):
 
 
 def _load(filename: str) -> dict:
-    with open('data/' + filename, 'rb') as ff:
+    from os.path import exists
+    if not exists(f'data/{filename}'):
+        return {}
+    with open(f'data/{filename}', 'rb') as ff:
         return pickle.load(ff)
 
 
 def _save(obj: dict, filename: str):
-    with open('data/' + filename, 'wb') as ff:
+    with open(f'data/{filename}', 'wb') as ff:
         pickle.dump(obj, ff, pickle.HIGHEST_PROTOCOL)
+
+
+def _load_lang():
+    from os import listdir
+    from json import load
+    for lang in listdir("lang"):
+        if not lang.endswith(".json"):
+            continue
+        with open(f"lang/{lang}") as file:
+            strings = load(file)
+        lang = lang[:-5]
+        languages.update({lang: strings})
 
 
 def _load_all():
     global chat_users, spin_name, can_change_name, results_today, results_total
-    global auto_spins
-    if not __import__("os").path.exists("users.pkl"):
-        return
+    global auto_spins, chat_config
     chat_users = _load("users.pkl")
     spin_name = _load("spin.pkl")
     can_change_name = _load("changers.pkl")
     results_today = _load("results.pkl")
     results_total = _load("total.pkl")
     auto_spins = _load("auto.pkl")
+    chat_config = _load("config.pkl")
+    _load_lang()
 
 
 def save_all():
@@ -112,6 +128,7 @@ def save_all():
     _save(results_today, "results.pkl")
     _save(results_total, "total.pkl")
     _save(auto_spins, "auto.pkl")
+    _save(chat_config, "config.pkl")
 
 
 def clear_data(chat_id: int):
@@ -190,14 +207,14 @@ def make_top(chat_id: int, *, page: int) -> (str, int):
     end = begin + config.TOP_PAGE_SIZE
     if len(winners) % config.TOP_PAGE_SIZE != 0:
         total_pages += 1
-    text = f"Статистика пользователей в данном чате: (страница {page} из {total_pages})\n"
+    text = get_lang(chat_id, 'stats_all')
     for user in winners[begin:end]:
         username = chat_users[chat_id].get(user[0], f"id{user[0]}")
-        text += f"*{username}*: {user[1]} раз(а)\n"
+        text += get_lang(chat_id, 'stats_user_short').format(username, user[1])
     return text, total_pages
 
 
-def can_change_spin_name(chat_id: int, user_id: int, bot: Bot) -> bool:
+def is_admin_for_bot(chat_id: int, user_id: int, bot: Bot) -> bool:
     return user_id == config.BOT_CREATOR or user_id in get_admins_ids(bot, chat_id) or \
            user_id in can_change_name.get(chat_id, [])
 
@@ -230,3 +247,20 @@ def get_admins_ids(bot: Bot, chat_id: int) -> list:
     admins = bot.get_chat_administrators(chat_id=chat_id)
     result = [admin.user.id for admin in admins]
     return result
+
+
+def update_config(chat_id: int, key, value):
+    if chat_config.get(chat_id) is None:
+        chat_config[chat_id] = {}
+    chat_config[chat_id].update({key: value})
+
+
+def get_config_key(chat_id: int, key, default=None):
+    return chat_config.get(chat_id, {}).get(key, default)
+
+
+def get_lang(chat_id: int, key: str):
+    lang = get_config_key(chat_id, 'lang', default=config.FALLBACK_LANG)
+    if languages.get(lang) is None or languages.get(lang).get(key) is None:
+        lang = config.FALLBACK_LANG
+    return languages.get(lang, {}).get(key, "!!!Translation is missing!!!")
