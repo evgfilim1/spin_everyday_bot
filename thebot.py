@@ -278,7 +278,7 @@ def do_the_spin(bot: Bot, update: Update):
         from time import sleep
         curr_text = choice(core.get_lang(chat_id, 'default_spin_texts'))
         locks.append(chat_id)
-        if core.get_config_key(chat_id, 'fast', False):
+        if core.get_config_key(chat_id, 'fast', default=False):
             bot.send_message(chat_id=chat_id, text=curr_text[-1].format(s=s, n=p),
                              parse_mode=ParseMode.MARKDOWN)
         else:
@@ -425,17 +425,21 @@ def settings(bot: Bot, update: Update):
         chat_id = update.effective_chat.id
         chat_title = update.effective_chat.title
 
+    button_on = core.get_lang(chat_id, 'settings_on')
+    button_off = core.get_lang(chat_id, 'settings_off')
+    callback_off = f'settings:{-chat_id}:{{}}:0'
+    callback_on = f'settings:{-chat_id}:{{}}:1'
     if core.get_config_key(chat_id, 'fast', default=False):
-        fast_text = core.get_lang(chat_id, 'settings_on')
-        fast_callback = f'settings:{-chat_id}:fast:0'
+        fast_text = button_on
+        fast_callback = callback_off.format('fast')
     else:
-        fast_text = core.get_lang(chat_id, 'settings_off')
-        fast_callback = f'settings:{-chat_id}:fast:1'
+        fast_text = button_off
+        fast_callback = callback_on.format('fast')
 
     keyboard = [[InlineKeyboardButton(core.get_lang(chat_id, 'settings_lang'),
                                       callback_data=f'settings:{-chat_id}:lang:')],
                 [InlineKeyboardButton(core.get_lang(chat_id, 'settings_fast_spin'),
-                                      callback_data=f'settings:{-chat_id}:fast:'),
+                                      callback_data=f'settings:{-chat_id}:fast:help+fast_spin'),
                  InlineKeyboardButton(fast_text, callback_data=fast_callback)]]
 
     if callback:
@@ -482,20 +486,26 @@ def lang_handler(bot: Bot, update: Update):
                                        reply_markup=InlineKeyboardMarkup(lang))
 
 
-def fast_handler(bot: Bot, update: Update):
-    chosen_option = update.callback_query.data.split(':')[-1]
-    chat_id = -int(update.callback_query.data.split(':')[1])
+def two_state_handler(bot: Bot, update: Update):
+    data = update.callback_query.data.split(':')
+    chosen_option = data[-1]
+    key = data[-2]
+    chat_id = -int(data[1])
     if chosen_option != "":
         chosen_option = bool(int(chosen_option))  # converting '1' to True, '0' to False
-        core.update_config(chat_id, 'fast', chosen_option)
+        core.update_config(chat_id, key, chosen_option)
         if chosen_option:
             answer = core.get_lang(chat_id, 'settings_turned_on')
         else:
             answer = core.get_lang(chat_id, 'settings_turned_off')
         update.callback_query.answer(answer)
         settings(bot, update)
-    else:
-        update.callback_query.answer(core.get_lang(chat_id, 'settings_fast_spin_caption'), show_alert=True)
+
+
+def two_state_helper(bot: Bot, update: Update):
+    chat_id = -int(update.callback_query.data.split(':')[1])
+    lang_key = update.callback_query.data.split(':')[-1].split('+')[1]
+    update.callback_query.answer(core.get_lang(chat_id, f'settings_{lang_key}_caption'), show_alert=True)
 
 
 def ask_feedback(bot: Bot, update: Update):
@@ -553,8 +563,9 @@ dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
 dp.add_handler(CallbackQueryHandler(pages_handler, pattern=r"^top:page_[1-9]+[0-9]*$"))
 dp.add_handler(CallbackQueryHandler(help_button_handler, pattern=r"^help:.+$"))
 dp.add_handler(CallbackQueryHandler(settings, pattern=r"^settings:\d+:main:$"))
-dp.add_handler(CallbackQueryHandler(lang_handler, pattern=r"^settings:\d+:lang:[a-z]*$"))
-dp.add_handler(CallbackQueryHandler(fast_handler, pattern=r"settings:\d+:fast:[01]?"))
+dp.add_handler(CallbackQueryHandler(lang_handler, pattern=r"^settings:\d+:lang:\w*$"))
+dp.add_handler(CallbackQueryHandler(two_state_handler, pattern=r"^settings:\d+:[a-z]+:[01]$"))
+dp.add_handler(CallbackQueryHandler(two_state_helper, pattern=r"^settings:\d+:[a-z]+:help\+[a-z_]+$"))
 dp.add_handler(MessageHandler(Filters.all, update_cache, edited_updates=True), group=-1)
 
 dp.add_error_handler(handle_error)
