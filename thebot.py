@@ -274,6 +274,10 @@ def do_the_spin(bot: Bot, update: Update):
         bot.send_message(chat_id=chat_id, text=core.get_lang(chat_id, 'already_spin').format(s=s, n=p),
                          parse_mode=ParseMode.MARKDOWN)
     else:
+        if core.get_config_key(chat_id, 'restrict', default=False) and \
+                not core.is_admin_for_bot(chat_id, update.message.from_user.id, bot):
+            update.message.reply_text(core.get_lang(chat_id, 'spin_restricted'))
+            return
         p = escape_markdown(core.choose_random_user(chat_id, bot))
         from time import sleep
         curr_text = choice(core.get_lang(chat_id, 'default_spin_texts'))
@@ -435,12 +439,21 @@ def settings(bot: Bot, update: Update):
     else:
         fast_text = button_off
         fast_callback = callback_on.format('fast')
+    if core.get_config_key(chat_id, 'restrict', default=False):
+        restrict_text = button_on
+        restrict_callback = callback_off.format('restrict')
+    else:
+        restrict_text = button_off
+        restrict_callback = callback_on.format('restrict')
 
     keyboard = [[InlineKeyboardButton(core.get_lang(chat_id, 'settings_lang'),
                                       callback_data=f'settings:{-chat_id}:lang:')],
                 [InlineKeyboardButton(core.get_lang(chat_id, 'settings_fast_spin'),
                                       callback_data=f'settings:{-chat_id}:fast:help+fast_spin'),
-                 InlineKeyboardButton(fast_text, callback_data=fast_callback)]]
+                 InlineKeyboardButton(fast_text, callback_data=fast_callback)],
+                [InlineKeyboardButton(core.get_lang(chat_id, 'settings_who_spin'),
+                                      callback_data=f'settings:{-chat_id}:restrict:help+who_spin'),
+                 InlineKeyboardButton(restrict_text, callback_data=restrict_callback)]]
 
     if callback:
         update.effective_message.edit_text(core.get_lang(chat_id, 'settings').format(chat_title),
