@@ -424,10 +424,20 @@ def settings(bot: Bot, update: Update):
         callback = False
         chat_id = update.effective_chat.id
         chat_title = update.effective_chat.title
+
+    if core.get_config_key(chat_id, 'fast', default=False):
+        fast_text = core.get_lang(chat_id, 'settings_on')
+        fast_callback = f'settings:{-chat_id}:fast:0'
+    else:
+        fast_text = core.get_lang(chat_id, 'settings_off')
+        fast_callback = f'settings:{-chat_id}:fast:1'
+
     keyboard = [[InlineKeyboardButton(core.get_lang(chat_id, 'settings_lang'),
-                                      callback_data=f'settings:{-chat_id}:lang:'),
-                 InlineKeyboardButton(core.get_lang(chat_id, 'settings_fast_spin'),
-                                      callback_data=f'settings:{-chat_id}:fast:')]]
+                                      callback_data=f'settings:{-chat_id}:lang:')],
+                [InlineKeyboardButton(core.get_lang(chat_id, 'settings_fast_spin'),
+                                      callback_data=f'settings:{-chat_id}:fast:'),
+                 InlineKeyboardButton(fast_text, callback_data=fast_callback)]]
+
     if callback:
         update.effective_message.edit_text(core.get_lang(chat_id, 'settings').format(chat_title),
                                            reply_markup=InlineKeyboardMarkup(keyboard))
@@ -478,20 +488,14 @@ def fast_handler(bot: Bot, update: Update):
     if chosen_option != "":
         chosen_option = bool(int(chosen_option))  # converting '1' to True, '0' to False
         core.update_config(chat_id, 'fast', chosen_option)
-        update.callback_query.answer(core.get_lang(chat_id, 'settings_changed'))
-    opts = []
-    if core.get_config_key(chat_id, 'fast', False):
-        status = core.get_lang(chat_id, 'settings_on')
-        opts.append([InlineKeyboardButton(core.get_lang(chat_id, 'settings_turn_off'),
-                                          callback_data=f'settings:{-chat_id}:fast:0')])
+        if chosen_option:
+            answer = core.get_lang(chat_id, 'settings_turned_on')
+        else:
+            answer = core.get_lang(chat_id, 'settings_turned_off')
+        update.callback_query.answer(answer)
+        settings(bot, update)
     else:
-        status = core.get_lang(chat_id, 'settings_off')
-        opts.append([InlineKeyboardButton(core.get_lang(chat_id, 'settings_turn_on'),
-                                          callback_data=f'settings:{-chat_id}:fast:1')])
-    opts.append([InlineKeyboardButton(core.get_lang(chat_id, 'settings_back'),
-                                      callback_data=f'settings:{-chat_id}:main:')])
-    update.effective_message.edit_text(core.get_lang(chat_id, 'settings_fast_spin_caption').format(status),
-                                       reply_markup=InlineKeyboardMarkup(opts))
+        update.callback_query.answer(core.get_lang(chat_id, 'settings_fast_spin_caption'), show_alert=True)
 
 
 def ask_feedback(bot: Bot, update: Update):
