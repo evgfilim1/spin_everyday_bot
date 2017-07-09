@@ -8,18 +8,18 @@
     "settings_turned_on": "On!",
     "settings_turned_off": "Off!",
     "settings_lang": "Language",
-    "settings_fast_spin": "Fast spin",
-    "settings_who_spin": "Allow only admins to start spin?",
+    "settings_fast_spin": "Fast draw",
+    "settings_who_spin": "Allow only admins to start draw?",
     "settings_back": "⬅️ Back to menu",
     "settings_lang_prompt": "Choose main chat language",
-    "settings_fast_spin_caption": "If this option is on, people would only see last message of chain",
+    "settings_fast_spin_caption": "If this option is on, people would only see last message of draw chain",
     "settings_who_spin_caption": "If this option is on, only admins would be able to use /spin",
     "pm_banned": "To start, PM me or unban me in PM",
     "start_pm_button": "PM me",
     "not_in_pm": "This command is not avaibable in PM",
     "check_pm": "Check your PM",
     "default_spin_name": "noname",
-    "spin_name_current": "Current spin name: *{0} of the day*",
+    "spin_name_current": "Current draw name: *{0} of the day*",
     "spin_name_changed": "Spin text changed to *{0} of the day*",
     "already_spin": "*{s} of the day* — `{n}`",
     "default_spin_texts": [
@@ -31,8 +31,8 @@
             "*Done!*", "```\n.∧＿∧\n( ･ω･｡)つ━☆・*。\n⊂　 ノ 　　　・゜+.\nしーＪ　　　°。+ *´¨)\n　　　　　　　　　.· ´¸.·*´¨) ¸.·*¨)\n　　　　　　　　　　(¸.·´ (¸.·'* ☆ WHOOSH, AND YOU ARE {s} OF THE DAY,```{n}"]
     ],
     "spin_suffix": "day",
-    "spin_restricted": "Only admin could start spin",
-    "locked_buttons": "Dont use button while spinning!",
+    "spin_restricted": "Only admin could start draw",
+    "locked_buttons": "Dont use button while drawing!",
     "help_texts": {
         "main": [
             "*Hi!* I am bot which makes daily drawing. To know more about, me click on menu",
