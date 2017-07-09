@@ -1,3 +1,119 @@
 {
-    "_name": "🇺🇸 English (don't work)"
+    "_copyright": "SpinEverydayBot english strings.\nCopyright © 2017 Yan <https://t.me/octonezd>",
+    "_name": "🇺🇸 English",
+    "settings": "Settings for {0}",
+    "settings_changed": "Done!",
+    "settings_on": "✅",
+    "settings_off": "☑️",
+    "settings_turned_on": "On!",
+    "settings_turned_off": "Off!",
+    "settings_lang": "Language",
+    "settings_fast_spin": "Fast spin",
+    "settings_who_spin": "Allow only admins to start spin?",
+    "settings_back": "⬅️ Back to menu",
+    "settings_lang_prompt": "Choose main chat language",
+    "settings_fast_spin_caption": "If this option is on, people would only see last message of chain",
+    "settings_who_spin_caption": "If this option is on, only admins would be able to use /spin",
+    "pm_banned": "To start, PM me or unban me in PM",
+    "start_pm_button": "PM me",
+    "not_in_pm": "This command is not avaibable in PM",
+    "check_pm": "Check your PM",
+    "default_spin_name": "noname",
+    "spin_name_current": "Current spin name: *{0} of the day*",
+    "spin_name_changed": "Spin text changed to *{0} of the day*",
+    "already_spin": "*{s} of the day* — `{n}`",
+    "default_spin_texts": [
+        ["So, who is *{s} of the day*?", "_Hmm, interesting..._", "*GOTCHA!*", "Today you are *{s} of the day,* {n}"],
+        ["*SPINNER STARTED SPINNING!*\n_CANCER CELLS ACTIVATED_", "_What the hell?!_", "Eh, ok...", "Congrats, {n}, you are *{s} of the day*"],
+        ["Uhm... Are you sure?", "Are you *really* sure?", "Anyway, process cant be stopped",
+            "Today you are *{s} of the day*, {n}!"],
+        ["_Searching for random cat on street..._", "_Searching for stick..._", "_Looking for hat..._", "_Drawing ASCII art..._",
+            "*Done!*", "```\n.∧＿∧\n( ･ω･｡)つ━☆・*。\n⊂　 ノ 　　　・゜+.\nしーＪ　　　°。+ *´¨)\n　　　　　　　　　.· ´¸.·*´¨) ¸.·*¨)\n　　　　　　　　　　(¸.·´ (¸.·'* ☆ WHOOSH, AND YOU ARE {s} OF THE DAY,```{n}"]
+    ],
+    "spin_suffix": "day",
+    "spin_restricted": "Only admin could start spin",
+    "locked_buttons": "Dont use button while spinning!",
+    "help_texts": {
+        "main": [
+            "*Hi!* I am bot which makes daily drawing. To know more about, me click on menu",
+            [
+                "Commands%commands",
+                "About%about"
+            ]
+        ],
+        "about" : [
+            "Moved to /about",
+            [
+                "Back%main"
+            ]
+        ],
+        "commands": [
+            "Choose command to know more about it",
+            [
+                "/setname%name",
+                "/admgroup%admin",
+                "/count%count",
+                "/spin%spin",
+                "/auto%auto",
+                "/stat%stat",
+                "Назад%main"
+            ]
+        ],
+        "name": [
+            "`/setname` — set name of daily draw.\n_Usage:_\n/setname — show current name of daily draw\n/setname TEXT — set name of daily draw to `TEXT`",
+            [
+                "Back%commands"
+            ]
+        ],
+        "admin": [
+            "`/admgroup` — управляет правами.\n_Использование:_\n/admgroup add — разрешает пользователю выполнять административные операции\n/admgroup del — запрещает пользователю выполнять административные операции\n/admgroup list — показывает список тех, кто может выполнять административные операции",
+            [
+                "Back%commands"
+            ]
+        ],
+        "count": [
+            "`/count` — count of users that currently are in daily draw",
+            [
+                "Back%commands"
+            ]
+        ],
+        "spin": [
+            "`/spin` — Starts draw. If there were already draw today, it shows winner of todays draw",
+            [
+                "Back%commands"
+            ]
+        ],
+        "auto": [
+            "`/auto` - settings of automatical draw.\n_Usage:_\n/auto set TIME — sets auto draw time to `TIME` GMT+0 (MSK-3). Time format: `hh:mm`\n/auto del — disabels automatic draw\n/auto status — state of automatic spin\n\nWARNING! If there were draw before automatic draw, bot will do nothing at automatic draw time",
+            [
+                "Back%commands"
+            ]
+        ],
+        "stat": [
+            "`/stat` — chat statistics.\n_Использование:_\n/stat — statistics of all chat or specified user\n/stat me — statistics of you",
+            [
+                "Back%commands"
+            ]
+        ]
+    },
+    "about_text": "*SpinEverydayBot v.{0}*\nHave questions? Contact {1}\nBot is licensed under [GNU AGPLv3](https://www.gnu.org/licenses/#AGPL)\n[GitHub]({2})",
+    "user_count": "Count of people which is registered in draw: _{0}_",
+    "time_error": "Ошибка! Проверьте время на правильность и отредактируйте сообщение",
+    "auto_spin_on": "Автоматический розыгрыш установлен в этом чате на {0} GMT+0",
+    "auto_spin_off": "Автоматический розыгрыш отключен в этом чате",
+    "auto_spin_set_off": "Теперь автоматический розыгрыш отключен в этом чате",
+    "auto_spin_still_off": "Автоматический розыгрыш ещё не был включен в этом чате",
+    "stats_me": "Ваша статистика:\n*{0}*: {1} раз(а)",
+    "stats_user": "Статистика пользователя *{0}*: {1} раз(а)",
+    "stats_user_short": "*{0}*: {1} раз(а)\n",
+    "stats_all": "Статистика пользователей в данном чате: (страница {0} из {1})\n",
+    "admin_allow": "Теперь этот пользователь *обладает* административными правами у бота",
+    "admin_still_allow": "Этот пользователь *уже обладает* административными правами у бота",
+    "admin_deny": "Теперь этот пользователь *не обладает* административными правами у бота",
+    "admin_still_deny": "Этот пользователь *ещё не обладает* административными правами у бота",
+    "admin_list": "Пользователи, которые *обладает* административными правами у бота (кроме администраторов чата):\n```\n{0}\n```",
+    "not_admin": "Доступ запрещён",
+    "feedback_prompt": "Введите сообщение, которое будет отправлено создателю бота\nБот принимает текст, изображения и документы\nВведите /cancel для отмены",
+    "feedback_sent": "Ваше сообщение отправлено!",
+    "feedback_cancelled": "Отменено"
 }
