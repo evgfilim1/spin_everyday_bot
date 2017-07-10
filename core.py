@@ -207,7 +207,7 @@ def make_top(chat_id: int, *, page: int) -> (str, int):
     end = begin + config.TOP_PAGE_SIZE
     if len(winners) % config.TOP_PAGE_SIZE != 0:
         total_pages += 1
-    text = get_lang(chat_id, 'stats_all')
+    text = get_lang(chat_id, 'stats_all').format(page, total_pages)
     for user in winners[begin:end]:
         username = chat_users[chat_id].get(user[0], f"id{user[0]}")
         text += get_lang(chat_id, 'stats_user_short').format(username, user[1])
