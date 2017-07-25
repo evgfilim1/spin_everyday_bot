@@ -27,7 +27,7 @@
         ["*SPINNER STARTED SPINNING!*\n_CANCER CELLS ACTIVATED_", "_What the hell?!_", "Eh, ok...", "Congrats, {n}, you are *{s} of the day*"],
         ["Uhm... Are you sure?", "Are you *really* sure?", "Anyway, process cant be stopped",
             "Today you are *{s} of the day*, {n}!"],
-        ["_Looking for random cat on street..._", "_Searching for stick..._", "_Looking for hat..._", "_Drawing ASCII art..._",
+        ["_Looking for random cat on street..._", "_Looking for stick..._", "_Looking for hat..._", "_Drawing ASCII art..._",
             "*Done!*", "```\n.∧＿∧\n( ･ω･｡)つ━☆・*。\n⊂　 ノ 　　　・゜+.\nしーＪ　　　°。+ *´¨)\n　　　　　　　　　.· ´¸.·*´¨) ¸.·*¨)\n　　　　　　　　　　(¸.·´ (¸.·'* ☆ WHOOSH, AND YOU ARE {s} OF THE DAY,```{n}"]
     ],
     "spin_suffix": "day",
@@ -35,7 +35,7 @@
     "locked_buttons": "Dont use button while raffling!",
     "help_texts": {
         "main": [
-            "*Hi!* I am bot which makes daily raffle. To know more about, me click on menu",
+            "*Hi!* I am bot which makes daily raffle. To know more about me, click on menu",
             [
                 "Commands%commands",
                 "About%about"
