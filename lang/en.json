@@ -109,7 +109,7 @@
     "stats_all": "Stats of this chat: (page {0} of {1})\n",
     "admin_allow": "Now this user *have* admin rights on this bot",
     "admin_still_allow": "This user *already have* admin right on this bot",
-    "admin_deny": "Now this user *doesnt have* admin rights on this bot",
+    "admin_deny": "Now this user *doesn't have* admin rights on this bot",
     "admin_still_deny": "This user *dont have* admin rights on this bot",
     "admin_list": "Users which *have* admin rights on this bot (except chat admins):\n```\n{0}\n```",
     "not_admin": "Access denied",
