@@ -12,6 +12,7 @@ from telegram.ext.dispatcher import run_async
 from telegram.utils.helpers import escape_markdown
 
 from random import choice
+from datetime import datetime
 
 import config
 import core
@@ -551,6 +552,10 @@ def cancel_feedback(bot: Bot, update: Update):
     return ConversationHandler.END
 
 
+def uptime(bot, update):
+    update.message.reply_text(core.get_lang(update.message.chat_id, 'uptime').format(datetime.now() - start_time))
+
+
 jobs.run_repeating(auto_save, 60)
 jobs.run_daily(reset, core.str_to_time(config.RESET_TIME))
 
@@ -575,6 +580,7 @@ dp.add_handler(CommandHandler('auto', auto_spin_config, pass_args=True, allow_ed
                               pass_job_queue=True))
 dp.add_handler(CommandHandler('stat', top, pass_args=True))
 dp.add_handler(CommandHandler('settings', settings))
+dp.add_handler(CommandHandler('uptime', uptime))
 dp.add_handler(feedback_handler)
 dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
 dp.add_handler(CallbackQueryHandler(pages_handler, pattern=r"^top:page_[1-9]+[0-9]*$"))
@@ -605,6 +611,7 @@ else:
     updater.start_polling(clean=True, allowed_updates=ALLOWED_UPDATES)
 
 log.info("Bot started")
+start_time = datetime.now()
 updater.idle()
 
 core.save_all()
