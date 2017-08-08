@@ -8,6 +8,7 @@ from datetime import time
 from telegram import (ChatMember, ParseMode, TelegramError, Update, Bot)
 from telegram.ext import JobQueue
 from telegram.ext.dispatcher import run_async
+from os.path import exists
 import logging
 
 import config
@@ -27,6 +28,7 @@ class TelegramHandler(logging.Handler):
         self.bot.send_message(chat_id=config.LOG_CHANNEL, text=msg, parse_mode=ParseMode.MARKDOWN)
 
 chat_users = {}
+usernames = {}
 spin_name = {}
 can_change_name = {}
 results_today = {}
@@ -45,12 +47,38 @@ else:
 handler.setFormatter(logging.Formatter(config.LOG_FORMAT, style='{'))
 
 
+def _migrate_to_v2():
+    from shutil import copy, move
+    if exists("data/unames.pkl") or (not exists("data/users.pkl") and not exists("users.pkl")):
+        return  # Already migrated or nothing to migrate
+    if not exists("data/users.pkl"):
+        print("==> Moving your *.pkl files to data/ directory...")
+        move('*.pkl', 'data/')
+    print("==> Migrating bot data...")
+    chats_users = _load("users.pkl")
+    unames = {}
+    print(" -> Extracting usernames...")
+    for chat, users in chats_users.items():
+        for user, name in users.items():
+            unames.update({user: name})
+        chats_users[chat] = list(users.keys())
+    print(" -> Copying data/users.pkl to data/users.bak.pkl...")
+    if exists("data/users.bak.pkl"):
+        raise FileExistsError("Can't backup old data")
+    copy("data/users.pkl", "data/users.bak.pkl")
+    print(" -> Saving generated data...")
+    _save(chats_users, "users.pkl")
+    _save(unames, "unames.pkl")
+    print("==> Migrating completed!")
+
+
 def read_update(updater, update):
     upd = Update.de_json(update, updater.bot)
     updater.update_queue.put(upd)
 
 
 def init(*, bot: Bot, job_queue: JobQueue, callback: callable):
+    _migrate_to_v2()
     _load_all()
     _configure_logging(bot)
     for chat in auto_spins:
@@ -65,7 +93,7 @@ def _configure_logging(bot: Bot):
     log = logging.getLogger(__name__)
     log.addHandler(handler)
     log.addHandler(tg_handler)
-    log.setLevel(logging.INFO)
+    log.setLevel(logging.DEBUG)
 
 
 def is_private(chat_id: int) -> bool:
@@ -83,15 +111,14 @@ def not_pm(f: callable):
     return wrapper
 
 
-def _load(filename: str) -> dict:
-    from os.path import exists
+def _load(filename: str, default: type = dict):
     if not exists(f'data/{filename}'):
-        return {}
+        return default()
     with open(f'data/{filename}', 'rb') as ff:
         return pickle.load(ff)
 
 
-def _save(obj: dict, filename: str):
+def _save(obj, filename: str):
     with open(f'data/{filename}', 'wb') as ff:
         pickle.dump(obj, ff, pickle.HIGHEST_PROTOCOL)
 
@@ -109,9 +136,10 @@ def _load_lang():
 
 
 def _load_all():
-    global chat_users, spin_name, can_change_name, results_today, results_total
+    global chat_users, usernames, spin_name, can_change_name, results_today, results_total
     global auto_spins, chat_config
     chat_users = _load("users.pkl")
+    usernames = _load("unames.pkl")
     spin_name = _load("spin.pkl")
     can_change_name = _load("changers.pkl")
     results_today = _load("results.pkl")
@@ -129,6 +157,7 @@ def save_all():
     _save(results_total, "total.pkl")
     _save(auto_spins, "auto.pkl")
     _save(chat_config, "config.pkl")
+    _save(usernames, "unames.pkl")
 
 
 def clear_data(chat_id: int):
@@ -175,21 +204,23 @@ def str_to_time(s: str) -> time:
 
 def choose_random_user(chat_id: int, bot: Bot) -> str:
     from random import choice
-    user = choice(list(chat_users[chat_id].items()))  # Getting tuple (user_id, username)
+    user_id = choice(chat_users[chat_id])
+    username = usernames.get(user_id, f"id{user_id}")
     try:
-        member = bot.get_chat_member(chat_id=chat_id, user_id=user[0])
+        member = bot.get_chat_member(chat_id=chat_id, user_id=user_id)
         if is_user_left(member):
             raise TelegramError("User left the group")
         if member.user.name == '':
+            usernames.update({user_id: f"DELETED/id{user_id}"})
             raise TelegramError("User deleted from Telegram")
     except TelegramError as e:
-        chat_users[chat_id].pop(user[0])
-        log.debug(f"{e}. User info: {user}, chat_id: {chat_id}")
+        chat_users[chat_id].pop(chat_users[chat_id].index(user_id))
+        log.debug(f"{e}. User info: {(user_id, username)}, chat_id: {chat_id}")
         return choose_random_user(chat_id, bot)
     user = member.user.name
     uid = member.user.id
     results_today.update({chat_id: user})
-    chat_users[chat_id].update({uid: user})
+    usernames.update({uid: user})
     if chat_id not in results_total:
         results_total.update({chat_id: {}})
     results_total[chat_id].update({uid: results_total[chat_id].get(uid, 0) + 1})
@@ -209,7 +240,7 @@ def make_top(chat_id: int, *, page: int) -> (str, int):
         total_pages += 1
     text = get_lang(chat_id, 'stats_all').format(page, total_pages)
     for user in winners[begin:end]:
-        username = chat_users[chat_id].get(user[0], f"id{user[0]}")
+        username = usernames.get(user[0], f"id{user[0]}")
         text += get_lang(chat_id, 'stats_user_short').format(username, user[1])
     return text, total_pages
 

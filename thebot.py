@@ -73,7 +73,10 @@ def update_cache(bot: Bot, update: Update):
     chat_id = update.effective_message.chat_id
     # Also skip first update when the bot is added
     if not core.is_private(chat_id) and core.chat_users.get(chat_id) is not None:
-        core.chat_users[chat_id].update({user.id: user.name})
+        if user.id not in core.chat_users[chat_id]:
+            core.chat_users[chat_id].append(user.id)
+        if user.name != core.usernames.get(user.id):
+            core.usernames.update({user.id: user.name})
 
 
 def pages_handler(bot: Bot, update: Update):
@@ -201,20 +204,21 @@ def svc_handler(bot: Bot, update: Update):
             (len(new_members) != 0 and any(new_member.id == bot.id for new_member in new_members)):
         # TODO: add admins to the list
         log.info(f"New chat! ({chat_id})")
-        core.chat_users[chat_id] = {}
+        core.chat_users[chat_id] = []
         core.can_change_name[chat_id] = []
     elif new_members:
         for new_member in new_members:
             if new_member.username and new_member.username[-3:].lower() == "bot":
                 return
-            core.chat_users[chat_id].update({new_member.id: new_member.name})
+            core.chat_users[chat_id].append(new_member.id)
+            core.usernames.update({new_member.id: new_member.name})
     elif migrate_to_id:
         core.migrate(chat_id, migrate_to_id)
     elif left_member and left_member.id == bot.id:
         core.clear_data(chat_id)
     elif left_member:
         try:
-            core.chat_users[chat_id].pop(left_member.id)
+            core.chat_users[chat_id].pop(core.chat_users[chat_id].index(left_member.id))
         except KeyError:
             # Passing this because of bots and unknown users
             pass
@@ -407,7 +411,7 @@ def admin_ctrl(bot: Bot, update: Update, args: list):
     elif cmd == "list":
         users = ""
         for user in core.can_change_name[msg.chat_id]:
-            users += core.chat_users[msg.chat_id].get(user, f"id{user}") + '\n'
+            users += core.usernames.get(user, f"id{user}") + '\n'
         text = core.get_lang(msg.chat_id, 'admin_list').format(users)
         msg.reply_text(text, parse_mode=ParseMode.MARKDOWN)
 
