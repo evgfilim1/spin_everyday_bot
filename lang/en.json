@@ -1,3 +1,119 @@
 {
-    "_name": "🇺🇸 English (don't work)"
+    "_copyright": "SpinEverydayBot english strings.\nCopyright © 2017 Yan <https://t.me/octonezd>",
+    "_name": "🇺🇸 English",
+    "settings": "Settings for {0}",
+    "settings_changed": "Done!",
+    "settings_on": "✅",
+    "settings_off": "☑️",
+    "settings_turned_on": "On!",
+    "settings_turned_off": "Off!",
+    "settings_lang": "Language",
+    "settings_fast_spin": "Fast raffle",
+    "settings_who_spin": "Allow only admins to start raffle?",
+    "settings_back": "⬅️ Back to menu",
+    "settings_lang_prompt": "Choose main chat language",
+    "settings_fast_spin_caption": "If this option is on, people would only see last message of raffle chain",
+    "settings_who_spin_caption": "If this option is on, only admins would be able to use /spin",
+    "pm_banned": "To start, PM me or unban me in PM",
+    "start_pm_button": "PM me",
+    "not_in_pm": "This command is not avaibable in PM",
+    "check_pm": "Check your PM",
+    "default_spin_name": "noname",
+    "spin_name_current": "Current draw name: *{0} of the day*",
+    "spin_name_changed": "Spin text changed to *{0} of the day*",
+    "already_spin": "*{s} of the day* — `{n}`",
+    "default_spin_texts": [
+        ["So, who is *{s} of the day*?", "_Hmm, interesting..._", "*GOTCHA!*", "Today you are *{s} of the day,* {n}"],
+        ["*SPINNER STARTED SPINNING!*\n_CANCER CELLS ACTIVATED_", "_What the hell?!_", "Eh, ok...", "Congrats, {n}, you are *{s} of the day*"],
+        ["Uhm... Are you sure?", "Are you *really* sure?", "Anyway, process cant be stopped",
+            "Today you are *{s} of the day*, {n}!"],
+        ["_Looking for random cat on street..._", "_Looking for stick..._", "_Looking for hat..._", "_Drawing ASCII art..._",
+            "*Done!*", "```\n.∧＿∧\n( ･ω･｡)つ━☆・*。\n⊂　 ノ 　　　・゜+.\nしーＪ　　　°。+ *´¨)\n　　　　　　　　　.· ´¸.·*´¨) ¸.·*¨)\n　　　　　　　　　　(¸.·´ (¸.·'* ☆ WHOOSH, AND YOU ARE {s} OF THE DAY,```{n}"]
+    ],
+    "spin_suffix": "day",
+    "spin_restricted": "Only admin could start raffle",
+    "locked_buttons": "Dont use button while raffling!",
+    "help_texts": {
+        "main": [
+            "*Hi!* I am bot which makes daily raffle. To know more about me, click on menu",
+            [
+                "Commands%commands",
+                "About%about"
+            ]
+        ],
+        "about" : [
+            "Moved to /about",
+            [
+                "Back%main"
+            ]
+        ],
+        "commands": [
+            "Choose command to know more about it",
+            [
+                "/setname%name",
+                "/admgroup%admin",
+                "/count%count",
+                "/spin%spin",
+                "/auto%auto",
+                "/stat%stat",
+                "Back%main"
+            ]
+        ],
+        "name": [
+            "`/setname` — set name of daily raffle.\n_Usage:_\n/setname — show current name of daily raffle\n/setname TEXT — set name of daily raffle to `TEXT`",
+            [
+                "Back%commands"
+            ]
+        ],
+        "admin": [
+            "`/admgroup` — manages rights.\n_Usage:_\n/admgroup add — Allows user to do admin stuff\n/admgroup del — disallows user to do admin stuff\n/admgroup list — list of people who can do admin stuff in this bot",
+            [
+                "Back%commands"
+            ]
+        ],
+        "count": [
+            "`/count` — count of users that currently are in daily raffle",
+            [
+                "Back%commands"
+            ]
+        ],
+        "spin": [
+            "`/spin` — Starts raffle. If there were already raffle today, it shows winner of todays raffle",
+            [
+                "Back%commands"
+            ]
+        ],
+        "auto": [
+            "`/auto` - settings of automatical raffle.\n_Usage:_\n/auto set TIME — sets auto raffle time to `TIME` GMT+0 (MSK-3). Time format: `hh:mm`\n/auto del — disabels automatic raffle\n/auto status — state of automatic raffle\n\nWARNING! If there were raffle before automatic raffle, bot will do nothing at automatic raffle time",
+            [
+                "Back%commands"
+            ]
+        ],
+        "stat": [
+            "`/stat` — chat statistics.\n_Usage:_\n/stat — statistics of all chat or specified user\n/stat me — statistics of you",
+            [
+                "Back%commands"
+            ]
+        ]
+    },
+    "about_text": "*SpinEverydayBot v.{0}*\nHave questions? Contact {1}\nBot is licensed under [GNU AGPLv3](https://www.gnu.org/licenses/#AGPL)\n[GitHub]({2})",
+    "user_count": "Count of people which is registered in raffle: _{0}_",
+    "time_error": "Error! Check if time is right and then edit the message",
+    "auto_spin_on": "Auto raffle time set to {0} GMT+0",
+    "auto_spin_off": "Auto raffle is disabled in this chat/",
+    "auto_spin_set_off": "Now auto raffle is disabled in this chat",
+    "auto_spin_still_off": "Auto raffle is not on in this chat",
+    "stats_me": "Your stats:\n*{0}*: {1} time(s)",
+    "stats_user": "Stats of *{0}*: {1} time(s)",
+    "stats_user_short": "*{0}*: {1} time(s)\n",
+    "stats_all": "Stats of this chat: (page {0} of {1})\n",
+    "admin_allow": "Now this user *have* admin rights on this bot",
+    "admin_still_allow": "This user *already have* admin right on this bot",
+    "admin_deny": "Now this user *doesn't have* admin rights on this bot",
+    "admin_still_deny": "This user *dont have* admin rights on this bot",
+    "admin_list": "Users which *have* admin rights on this bot (except chat admins):\n```\n{0}\n```",
+    "not_admin": "Access denied",
+    "feedback_prompt": "Enter your feedback\nBot accepts text, images, and documents\nType /cancel to cancel",
+    "feedback_sent": "Message sent!",
+    "feedback_cancelled": "Canceled"
 }
