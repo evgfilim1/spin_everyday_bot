@@ -125,9 +125,9 @@ def _save(obj, filename: str):
 
 def _load_lang():
     from os import listdir
-    from json import load
+    from yaml import load
     for lang in listdir("lang"):
-        if not lang.endswith(".json"):
+        if not lang.endswith(".yaml"):
             continue
         with open(f"lang/{lang}") as file:
             strings = load(file)

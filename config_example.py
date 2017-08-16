@@ -6,9 +6,6 @@
 
 # You can find out necessary IDs from @ShowJsonBot
 
-# Version string for bot
-__version__ = '1.5.3-dev'
-
 # Repository URL to be shown in /about
 REPO_URL = "https://github.com/evgfilim1/spin_everyday_bot"
 

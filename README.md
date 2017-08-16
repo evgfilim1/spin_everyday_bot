@@ -1,20 +1,32 @@
 # SpinEverydayBot by @evgfilim1
-## Install guide
+## Preparing
 
-Check that you have `python3.6` and `python3-pip` installed, then run this command in your shell:
-```bash
-python3.6 setup.py
+Check that you have `python3.6` and `pip` installed, then run this command in your shell:
+```bash 
+sudo pip3 install -r requirements.txt
 ```
-... and follow on-screen instructions (if any)
+If you want to use [TeleSocket Service](https://pypi.python.org/pypi/TeleSocketClient), 
+append `TeleSocketClient` to the command:
+```bash
+sudo pip3 install -r requirements.txt TeleSocketClient
+```
+**For Windows users**: instead of typing `sudo` in command prompt, run `cmd.exe` as Administrator;
+ instead of `pip3`, use `pip`
 
-**For Windows users:** use `python3` or `python` instead of `python3.6`
+## Setting up
 
-If you don't know, how to create new bot in Telegram, google it, there are a lot of docs :)
-But _don't forget to disable privacy mode_
+Do these steps to set up the bot:
+```bash
+git clone https://github.com/evgfilim1/spin_everyday_bot.git
+cd spin_everyday_bot
+cp config_example.py config.py
+```
+Now open `config.py` in your favourite text editor and change example values to suit your needs
 
-You can find manual setup guide [here](MANUAL_SETUP.md)
+**For Windows users:** use `copy` instead of `cp`
 
-## Running bot
+## Running bot:
+
 Simply type in your shell:
 ```bash 
 python3.6 thebot.py
