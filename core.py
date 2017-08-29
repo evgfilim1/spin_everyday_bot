@@ -95,7 +95,7 @@ def _configure_logging(bot: Bot):
     log = logging.getLogger(__name__)
     log.addHandler(handler)
     log.addHandler(tg_handler)
-    log.setLevel(logging.DEBUG)
+    log.setLevel(logging.INFO)
 
 
 def is_private(chat_id: int) -> bool:
