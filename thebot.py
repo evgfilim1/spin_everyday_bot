@@ -460,52 +460,56 @@ def spin_count(bot: Bot, update: Update):
 def settings(bot: Bot, update: Update):
     if update.callback_query:
         callback = True
-        chat_id = -int(update.callback_query.data.split(':')[1])
+        chat_id = int(update.callback_query.data.split(':')[1])
         chat_title = bot.get_chat(chat_id).title
     else:
         callback = False
         chat_id = update.effective_chat.id
         chat_title = update.effective_chat.title
 
-    button_on = core.get_lang(chat_id, 'settings_on')
-    button_off = core.get_lang(chat_id, 'settings_off')
-    callback_off = f'settings:{-chat_id}:{{}}:0'
-    callback_on = f'settings:{-chat_id}:{{}}:1'
-    if core.get_config_key(chat_id, 'fast', default=False):
-        fast_text = button_on
-        fast_callback = callback_off.format('fast')
+    if core.is_private(chat_id):
+        pm = True
+        chat_title = ''
     else:
-        fast_text = button_off
-        fast_callback = callback_on.format('fast')
-    if core.get_config_key(chat_id, 'restrict', default=False):
-        restrict_text = button_on
-        restrict_callback = callback_off.format('restrict')
-    else:
-        restrict_text = button_off
-        restrict_callback = callback_on.format('restrict')
+        pm = False
 
     keyboard = [[InlineKeyboardButton(core.get_lang(chat_id, 'settings_lang'),
-                                      callback_data=f'settings:{-chat_id}:lang:')],
-                [InlineKeyboardButton(core.get_lang(chat_id, 'settings_fast_spin'),
-                                      callback_data=f'settings:{-chat_id}:fast:help+fast_spin'),
-                 InlineKeyboardButton(fast_text, callback_data=fast_callback)],
-                [InlineKeyboardButton(core.get_lang(chat_id, 'settings_who_spin'),
-                                      callback_data=f'settings:{-chat_id}:restrict:help+who_spin'),
-                 InlineKeyboardButton(restrict_text, callback_data=restrict_callback)]]
+                                      callback_data=f'settings:{chat_id}:lang:')]]
+    button_on = core.get_lang(chat_id, 'settings_on')
+    button_off = core.get_lang(chat_id, 'settings_off')
+    callback_off = f'settings:{chat_id}:{{}}:0'
+    callback_on = f'settings:{chat_id}:{{}}:1'
+    if not pm:
+        if core.get_config_key(chat_id, 'fast', default=False):
+            fast_text = button_on
+            fast_callback = callback_off.format('fast')
+        else:
+            fast_text = button_off
+            fast_callback = callback_on.format('fast')
+        if core.get_config_key(chat_id, 'restrict', default=False):
+            restrict_text = button_on
+            restrict_callback = callback_off.format('restrict')
+        else:
+            restrict_text = button_off
+            restrict_callback = callback_on.format('restrict')
+        keyboard.extend([[InlineKeyboardButton(core.get_lang(chat_id, 'settings_fast_spin'),
+                                               callback_data=f'settings:{chat_id}:fast:help+fast_spin'),
+                          InlineKeyboardButton(fast_text, callback_data=fast_callback)],
+                         [InlineKeyboardButton(core.get_lang(chat_id, 'settings_who_spin'),
+                                               callback_data=f'settings:{chat_id}:restrict:help+who_spin'),
+                          InlineKeyboardButton(restrict_text, callback_data=restrict_callback)]])
 
     if callback:
         update.effective_message.edit_text(core.get_lang(chat_id, 'settings').format(chat_title),
                                            reply_markup=InlineKeyboardMarkup(keyboard))
     else:
-        if core.is_private(chat_id):
-            update.message.reply_text(core.get_lang(chat_id, 'not_in_pm'))
-            return
         user_id = update.effective_user.id
         if core.is_admin_for_bot(chat_id, user_id, bot):
             try:
                 bot.send_message(user_id, core.get_lang(chat_id, 'settings').format(chat_title),
                                  reply_markup=InlineKeyboardMarkup(keyboard))
-                update.message.reply_text(core.get_lang(chat_id, 'check_pm'))
+                if not pm:
+                    update.message.reply_text(core.get_lang(chat_id, 'check_pm'))
             except TelegramError:
                 update.message.reply_text(text=core.get_lang(chat_id, 'pm_banned'),
                                           reply_markup=InlineKeyboardMarkup([[
@@ -519,20 +523,20 @@ def settings(bot: Bot, update: Update):
 
 def lang_handler(bot: Bot, update: Update):
     chosen_lang = update.callback_query.data.split(':')[-1]
-    chat_id = -int(update.callback_query.data.split(':')[1])
+    chat_id = int(update.callback_query.data.split(':')[1])
     if chosen_lang != "":
         core.update_config(chat_id, 'lang', chosen_lang)
         update.callback_query.answer(core.get_lang(chat_id, 'settings_changed'))
         return
     lang = []
     for i, (key, item) in enumerate(core.languages.items()):
-        button = InlineKeyboardButton(item.get('_name', key), callback_data=f'settings:{-chat_id}:lang:{key}')
+        button = InlineKeyboardButton(item.get('_name', key), callback_data=f'settings:{chat_id}:lang:{key}')
         if i % 2 == 0:
             lang.append([button])
         else:
             lang[-1].append(button)
     lang.append([InlineKeyboardButton(core.get_lang(chat_id, 'settings_back'),
-                                      callback_data=f'settings:{-chat_id}:main:')])
+                                      callback_data=f'settings:{chat_id}:main:')])
     update.effective_message.edit_text(core.get_lang(chat_id, 'settings_lang_prompt'),
                                        reply_markup=InlineKeyboardMarkup(lang))
 
@@ -541,7 +545,7 @@ def two_state_handler(bot: Bot, update: Update):
     data = update.callback_query.data.split(':')
     chosen_option = data[-1]
     key = data[-2]
-    chat_id = -int(data[1])
+    chat_id = int(data[1])
     if chosen_option != "":
         chosen_option = bool(int(chosen_option))  # converting '1' to True, '0' to False
         core.update_config(chat_id, key, chosen_option)
@@ -554,7 +558,7 @@ def two_state_handler(bot: Bot, update: Update):
 
 
 def two_state_helper(bot: Bot, update: Update):
-    chat_id = -int(update.callback_query.data.split(':')[1])
+    chat_id = int(update.callback_query.data.split(':')[1])
     lang_key = update.callback_query.data.split(':')[-1].split('+')[1]
     update.callback_query.answer(core.get_lang(chat_id, f'settings_{lang_key}_caption'), show_alert=True)
 
@@ -619,10 +623,10 @@ dp.add_handler(feedback_handler)
 dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
 dp.add_handler(CallbackQueryHandler(pages_handler, pattern=r"^top:page_[1-9]+[0-9]*$"))
 dp.add_handler(CallbackQueryHandler(help_button_handler, pattern=r"^help:.+$"))
-dp.add_handler(CallbackQueryHandler(settings, pattern=r"^settings:\d+:main:$"))
-dp.add_handler(CallbackQueryHandler(lang_handler, pattern=r"^settings:\d+:lang:\w*$"))
-dp.add_handler(CallbackQueryHandler(two_state_handler, pattern=r"^settings:\d+:[a-z]+:[01]$"))
-dp.add_handler(CallbackQueryHandler(two_state_helper, pattern=r"^settings:\d+:[a-z]+:help\+[a-z_]+$"))
+dp.add_handler(CallbackQueryHandler(settings, pattern=r"^settings:-?\d+:main:$"))
+dp.add_handler(CallbackQueryHandler(lang_handler, pattern=r"^settings:-?\d+:lang:\w*$"))
+dp.add_handler(CallbackQueryHandler(two_state_handler, pattern=r"^settings:-?\d+:[a-z]+:[01]$"))
+dp.add_handler(CallbackQueryHandler(two_state_helper, pattern=r"^settings:-?\d+:[a-z]+:help\+[a-z_]+$"))
 dp.add_handler(MessageHandler(Filters.all, update_cache, edited_updates=True), group=-1)
 
 dp.add_error_handler(handle_error)
