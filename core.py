@@ -37,6 +37,8 @@ auto_spins = {}
 auto_spin_jobs = {}
 chat_config = {}
 languages = {}
+wotd_registered = []
+wotd = 0
 
 announcement_chats = []
 log = None
@@ -137,7 +139,7 @@ def _load_lang():
 
 def _load_all():
     global chat_users, usernames, spin_name, can_change_name, results_today, results_total
-    global auto_spins, chat_config
+    global auto_spins, chat_config, wotd_registered, wotd
     chat_users = _load("users.pkl")
     usernames = _load("unames.pkl")
     spin_name = _load("spin.pkl")
@@ -146,6 +148,8 @@ def _load_all():
     results_total = _load("total.pkl")
     auto_spins = _load("auto.pkl")
     chat_config = _load("config.pkl")
+    wotd_registered = _load("wotdreg.pkl", default=list)
+    wotd = _load("wotdwin.pkl", default=int)
     _load_lang()
 
 
@@ -158,6 +162,8 @@ def save_all():
     _save(auto_spins, "auto.pkl")
     _save(chat_config, "config.pkl")
     _save(usernames, "unames.pkl")
+    _save(wotd, "wotdwin.pkl")
+    _save(wotd_registered, "wotdreg.pkl")
 
 
 def clear_data(chat_id: int):
@@ -202,29 +208,42 @@ def str_to_time(s: str) -> time:
     return time((hours + offset) % 24, minutes, tzinfo=None)
 
 
-def choose_random_user(chat_id: int, bot: Bot) -> str:
+def choose_random_user(chat_id: int, bot: Bot) -> int:
+    global wotd
     from random import choice
-    user_id = choice(chat_users[chat_id])
-    username = usernames.get(user_id, f"id{user_id}")
-    try:
-        member = bot.get_chat_member(chat_id=chat_id, user_id=user_id)
-        if is_user_left(member):
-            raise TelegramError("User left the group")
-        if member.user.name == '':
-            usernames.update({user_id: f"DELETED/id{user_id}"})
-            raise TelegramError("User deleted from Telegram")
-    except TelegramError as e:
-        chat_users[chat_id].pop(chat_users[chat_id].index(user_id))
-        log.debug(f"{e}. User info: {(user_id, username)}, chat_id: {chat_id}")
+    if chat_id:
+        user_id = choice(chat_users[chat_id])
+        try:
+            member = bot.get_chat_member(chat_id=chat_id, user_id=user_id)
+            if is_user_left(member):
+                raise TelegramError("User left the group")
+        except TelegramError as e:
+            chat_users[chat_id].pop(chat_users[chat_id].index(user_id))
+            log.debug(f"{e}. User_id: {user_id}, chat_id: {chat_id}")
+            return choose_random_user(chat_id, bot)
+        user = member.user
+    else:
+        user_id = choice(wotd_registered)
+        user = bot.get_chat(user_id)
+    if user.first_name == '':
+        usernames.update({user_id: f"DELETED/id{user_id}"})
         return choose_random_user(chat_id, bot)
-    user = member.user.name
-    uid = member.user.id
-    results_today.update({chat_id: user})
-    usernames.update({uid: user})
-    if chat_id not in results_total:
-        results_total.update({chat_id: {}})
-    results_total[chat_id].update({uid: results_total[chat_id].get(uid, 0) + 1})
-    return user
+    # Waiting for PR #809 to merge, now using this behaviour
+    if user.username:
+        name = f'@{user.username}'
+    elif user.last_name:
+        name = f'{user.first_name} {user.last_name}'
+    else:
+        name = user.first_name
+    if chat_id:
+        results_today.update({chat_id: user.id})
+        if chat_id not in results_total:
+            results_today.update({chat_id: {}})
+        results_total[chat_id].update({user.id: results_total[chat_id].get(user.id, 0) + 1})
+    else:
+        wotd = user.id
+    usernames.update({user.id: name})
+    return user.id
 
 
 def top_win(chat_id: int) -> list:

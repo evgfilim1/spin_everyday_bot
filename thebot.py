@@ -55,9 +55,13 @@ def handle_error(bot: Bot, update: Update, error):
     log.error(f"Update {update} caused error: {error}")
 
 
-def reset(bot: Bot = None, job: Job = None):
+def daily_job(bot: Bot, job: Job = None):
     core.results_today.clear()
     log.debug("Reset done")
+    uid = core.choose_random_user(0, bot)
+    text = choice(core.get_lang(uid, 'default_spin_texts'))[-1]
+    bot.send_message(uid, text.format(s=core.get_lang(uid, 'wotd'), n=core.usernames.get(uid)),
+                     parse_mode=ParseMode.MARKDOWN)
 
 
 def auto_save(bot: Bot = None, job: Job = None):
@@ -153,7 +157,7 @@ def admin_shell(bot: Bot, update: Update, args: list):
             eval(" ".join(args))
         ), parse_mode=ParseMode.MARKDOWN, reply_to_message_id=msg.message_id)
     elif cmd == "reset":
-        reset(bot, None)
+        daily_job(bot, None)
     elif cmd == "respin":
         if len(args) > 0:
             chat = int(args[0])
@@ -291,12 +295,12 @@ def about(bot: Bot, update: Update):
 @core.not_pm
 def do_the_spinn(bot: Bot, update: Update):
     chat_id = update.message.chat_id
-    s = escape_markdown(core.spin_name.get(chat_id, core.get_lang(chat_id, 'default_spin_name')))
-    p = core.results_today.get(chat_id)
-    if p is None or chat_id in locks:
+    spin_name = escape_markdown(core.spin_name.get(chat_id, core.get_lang(chat_id, 'default_spin_name')))
+    winner = core.results_today.get(chat_id)
+    if winner is None or chat_id in locks:
         return
     bot.send_message(chat_id=chat_id,
-                     text=core.get_lang(chat_id, 'already_spin').format(s=s, n=update.message.from_user.name),
+                     text=core.get_lang(chat_id, 'already_spin').format(s=spin_name, n=update.message.from_user.name),
                      parse_mode=ParseMode.MARKDOWN)
 
 
@@ -304,28 +308,29 @@ def do_the_spinn(bot: Bot, update: Update):
 @core.not_pm
 def do_the_spin(bot: Bot, update: Update):
     chat_id = update.message.chat_id
-    s = escape_markdown(core.spin_name.get(chat_id, core.get_lang(chat_id, 'default_spin_name')))
-    p = core.results_today.get(chat_id)
+    spin_name = escape_markdown(core.spin_name.get(chat_id, core.get_lang(chat_id, 'default_spin_name')))
+    winner = core.results_today.get(chat_id)
     if chat_id in locks:
         return
-    if p is not None:
-        bot.send_message(chat_id=chat_id, text=core.get_lang(chat_id, 'already_spin').format(s=s, n=p),
-                         parse_mode=ParseMode.MARKDOWN)
+    if winner is not None:
+        winner = core.usernames.get(winner, f'id{winner}')
+        bot.send_message(chat_id=chat_id, text=core.get_lang(chat_id, 'already_spin').format(s=spin_name, n=winner),
+                         parse_mode=ParseMode.MARKDOWN, disable_notification=True)
     else:
         if core.get_config_key(chat_id, 'restrict', default=False) and \
                 not core.is_admin_for_bot(chat_id, update.message.from_user.id, bot):
             update.message.reply_text(core.get_lang(chat_id, 'spin_restricted'))
             return
-        p = escape_markdown(core.choose_random_user(chat_id, bot))
+        winner = escape_markdown(core.usernames.get(core.choose_random_user(chat_id, bot)))
         from time import sleep
         curr_text = choice(core.get_lang(chat_id, 'default_spin_texts'))
         locks.append(chat_id)
         if core.get_config_key(chat_id, 'fast', default=False):
-            bot.send_message(chat_id=chat_id, text=curr_text[-1].format(s=s, n=p),
+            bot.send_message(chat_id=chat_id, text=curr_text[-1].format(s=spin_name, n=winner),
                              parse_mode=ParseMode.MARKDOWN)
         else:
             for t in curr_text:
-                bot.send_message(chat_id=chat_id, text=t.format(s=s, n=p),
+                bot.send_message(chat_id=chat_id, text=t.format(s=spin_name, n=winner),
                                  parse_mode=ParseMode.MARKDOWN)
                 sleep(2)
         locks.pop(locks.index(chat_id))
@@ -593,8 +598,28 @@ def uptime(bot, update):
     update.message.reply_text(core.get_lang(update.message.chat_id, 'uptime').format(datetime.now() - start_time))
 
 
+def wotd(bot: Bot, update: Update, args: list):
+    chat_id = update.effective_chat.id
+    user_id = update.effective_user.id
+    if len(args) == 0:
+        if core.wotd:
+            update.message.reply_text(core.get_lang(chat_id, 'already_spin').format(
+                s=core.get_lang(chat_id, 'wotd'), n=core.usernames.get(core.wotd)
+            ), parse_mode=ParseMode.MARKDOWN, disable_notification=True)
+        else:
+            update.message.reply_text(core.get_lang(chat_id, 'wotd_nostats'))
+    else:
+        cmd = args.pop(0)
+        if cmd == 'register':
+            if user_id not in core.wotd_registered:
+                core.wotd_registered.append(user_id)
+                update.effective_message.reply_text(core.get_lang(chat_id, 'wotd_registered'))
+            else:
+                update.effective_message.reply_text(core.get_lang(chat_id, 'wotd_already_reg'))
+
+
 jobs.run_repeating(auto_save, 60)
-jobs.run_daily(reset, core.str_to_time(config.RESET_TIME))
+jobs.run_daily(daily_job, core.str_to_time(config.RESET_TIME))
 
 feedback_handler = ConversationHandler(
     entry_points=[CommandHandler('feedback', ask_feedback)],
@@ -619,6 +644,7 @@ dp.add_handler(CommandHandler('auto', auto_spin_config, pass_args=True, allow_ed
 dp.add_handler(CommandHandler('stat', top, pass_args=True))
 dp.add_handler(CommandHandler('settings', settings))
 dp.add_handler(CommandHandler('uptime', uptime))
+dp.add_handler(CommandHandler('winner', wotd, pass_args=True))
 dp.add_handler(feedback_handler)
 dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
 dp.add_handler(CallbackQueryHandler(pages_handler, pattern=r"^top:page_[1-9]+[0-9]*$"))
