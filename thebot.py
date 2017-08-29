@@ -142,9 +142,6 @@ def help_button_handler(bot: Bot, update: Update):
 
 def admin_shell(bot: Bot, update: Update, args: list):
     msg = update.effective_message
-    if msg.from_user.id != config.BOT_CREATOR:
-        return
-
     try:
         cmd = args.pop(0)
     except IndexError:
@@ -162,8 +159,8 @@ def admin_shell(bot: Bot, update: Update, args: list):
             chat = int(args[0])
         else:
             chat = msg.chat_id
-        log.info(f"Respin done in {chat}")
         core.results_today.pop(chat)
+        log.info(f"Respin done in {chat}")
         msg.reply_text("respin ok")
     elif cmd == "md_announce":
         core.announce(bot, " ".join(args), md=True)
@@ -232,6 +229,7 @@ def svc_handler(bot: Bot, update: Update):
         start_help_handler(bot, update, [])
     elif new_members:
         for new_member in new_members:
+            # Waiting for PR #806 to merge, now using this behaviour
             if new_member.username and new_member.username[-3:].lower() == "bot":
                 return
             core.chat_users[chat_id].append(new_member.id)
@@ -605,7 +603,8 @@ feedback_handler = ConversationHandler(
 dp.add_handler(CommandHandler(['start', 'help'], start_help_handler, pass_args=True))
 dp.add_handler(CommandHandler('about', about))
 dp.add_handler(CommandHandler('admgroup', admin_ctrl, pass_args=True, allow_edited=True))
-dp.add_handler(CommandHandler('sudo', admin_shell, pass_args=True, allow_edited=True))
+dp.add_handler(CommandHandler('sudo', admin_shell, pass_args=True, allow_edited=True,
+                              filters=Filters.user(user_id=config.BOT_CREATOR)))
 dp.add_handler(CommandHandler('ping', ping))
 dp.add_handler(CommandHandler('setname', change_spin_name, pass_args=True, allow_edited=True))
 dp.add_handler(CommandHandler('count', spin_count))
