@@ -60,8 +60,12 @@ def daily_job(bot: Bot, job: Job = None):
     log.debug("Reset done")
     uid = core.choose_random_user(0, bot)
     text = choice(core.get_lang(uid, 'default_spin_texts'))[-1]
-    bot.send_message(uid, text.format(s=core.get_lang(uid, 'wotd'), n=core.usernames.get(uid)),
-                     parse_mode=ParseMode.MARKDOWN)
+    try:
+        bot.send_message(uid, text.format(s=core.get_lang(uid, 'wotd'), n=core.usernames.get(uid)),
+                         parse_mode=ParseMode.MARKDOWN)
+    except TelegramError:
+        pass
+    log.debug("Daily spin done")
 
 
 def auto_save(bot: Bot = None, job: Job = None):
