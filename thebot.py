@@ -513,7 +513,7 @@ def settings(bot: Bot, update: Update):
                                            reply_markup=InlineKeyboardMarkup(keyboard))
     else:
         user_id = update.effective_user.id
-        if core.is_admin_for_bot(chat_id, user_id, bot):
+        if (not pm and core.is_admin_for_bot(chat_id, user_id, bot)) or pm:
             try:
                 bot.send_message(user_id, core.get_lang(chat_id, 'settings').format(chat_title),
                                  reply_markup=InlineKeyboardMarkup(keyboard))
