@@ -131,7 +131,7 @@ def _load_lang():
     for lang in listdir("lang"):
         if not lang.endswith(".yaml"):
             continue
-        with open(f"lang/{lang}") as file:
+        with open(f"lang/{lang}", encoding='utf-8') as file:
             strings = load(file)
         lang = lang[:-5]
         languages.update({lang: strings})
