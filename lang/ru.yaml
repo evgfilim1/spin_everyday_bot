@@ -2,7 +2,7 @@
 # Copyright © 2017 Evgeniy Filimonov <https://t.me/evgfilim1>
 
 _name: "\U0001f1f7\U0001f1fa Russian/Русский"
-settings: "Настройки бота для чата {0}"
+settings: "Настройки бота для {0}"
 settings_changed: "Изменено!"
 settings_on: "✅"
 settings_off: "☑️"

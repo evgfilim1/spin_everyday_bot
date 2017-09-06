@@ -478,7 +478,7 @@ def settings(bot: Bot, update: Update):
 
     if core.is_private(chat_id):
         pm = True
-        chat_title = ''
+        chat_title = update.effective_user.name
     else:
         pm = False
 
