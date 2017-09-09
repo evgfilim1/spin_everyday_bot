@@ -1,2 +1,2 @@
-python-telegram-bot>=7.0
+python-telegram-bot>=8.0
 PyYAML>=3.12

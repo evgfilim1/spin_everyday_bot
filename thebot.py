@@ -237,8 +237,7 @@ def svc_handler(bot: Bot, update: Update):
         start_help_handler(bot, update, [])
     elif new_members:
         for new_member in new_members:
-            # Waiting for PR #806 to merge, now using this behaviour
-            if new_member.username and new_member.username[-3:].lower() == "bot":
+            if new_member.is_bot:
                 return
             core.chat_users[chat_id].append(new_member.id)
             core.usernames.update({new_member.id: new_member.name})
