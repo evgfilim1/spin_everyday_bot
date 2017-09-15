@@ -19,8 +19,8 @@ TELESOCKET_TOKEN = "1234567890abcdef1234567890abcdef1234567890abcdef"
 # Your Telegram User ID
 BOT_CREATOR = 123456987
 
-# How much users will be shown on one page of top
-TOP_PAGE_SIZE = 10
+# How much users will be shown on one page
+PAGE_SIZE = 10
 
 # Time of resetting spin results (in GMT)
 RESET_TIME = "21:00"

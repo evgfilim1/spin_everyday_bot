@@ -94,20 +94,22 @@ def update_cache(bot: Bot, update: Update):
 
 def pages_handler(bot: Bot, update: Update):
     query = update.callback_query
-    data = query.data.split(':')[1]
+    _type, data = query.data.split(':')
     msg = query.message
-
-    if msg.chat_id in locks:
-        query.answer(core.get_lang(msg.chat_id, 'locked_buttons'))
-        return
-
     page_n = int(data.split('_')[1])
-    text, max_pages = core.make_top(msg.chat_id, page=page_n)
+    if _type == 'top':
+        if msg.chat_id in locks:
+            query.answer(core.get_lang(msg.chat_id, 'locked_buttons'))
+            return
+        text, max_pages = core.make_top(msg.chat_id, page=page_n)
+    else:
+        text, max_pages = core.make_userlist(msg.chat_id, page=page_n)
+
     reply_keyboard = [[]]
     if page_n != 1:
-        reply_keyboard[0].append(InlineKeyboardButton("<<", callback_data=f"top:page_{page_n - 1}"))
+        reply_keyboard[0].append(InlineKeyboardButton("<<", callback_data=f"{_type}:page_{page_n - 1}"))
     if page_n != max_pages:
-        reply_keyboard[0].append(InlineKeyboardButton(">>", callback_data=f"top:page_{page_n + 1}"))
+        reply_keyboard[0].append(InlineKeyboardButton(">>", callback_data=f"{_type}:page_{page_n + 1}"))
     try:
         query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(reply_keyboard),
                                 parse_mode=ParseMode.MARKDOWN)
@@ -477,6 +479,20 @@ def spin_count(bot: Bot, update: Update):
                               parse_mode=ParseMode.MARKDOWN)
 
 
+@core.not_pm
+def user_list(bot: Bot, update: Update):
+    chat_id = update.message.chat_id
+    if core.get_config_key(chat_id, 'show_list', default=False):
+        reply_keyboard = [[]]
+        text, pages = core.make_userlist(chat_id, page=1)
+        if pages > 1:
+            reply_keyboard = [[InlineKeyboardButton(">>", callback_data="userlist:page_2")]]
+        update.message.reply_text(text=text, parse_mode=ParseMode.MARKDOWN,
+                                  reply_markup=InlineKeyboardMarkup(reply_keyboard))
+    else:
+        update.message.reply_text(core.get_lang(chat_id, 'list_off'))
+
+
 def settings(bot: Bot, update: Update):
     if update.callback_query:
         callback = True
@@ -512,12 +528,21 @@ def settings(bot: Bot, update: Update):
         else:
             restrict_text = button_off
             restrict_callback = callback_on.format('restrict')
+        if core.get_config_key(chat_id, 'show_list', default=False):
+            list_text = button_on
+            list_callback = callback_off.format('show_list')
+        else:
+            list_text = button_off
+            list_callback = callback_on.format('show_list')
         keyboard.extend([[InlineKeyboardButton(core.get_lang(chat_id, 'settings_fast_spin'),
                                                callback_data=f'settings:{chat_id}:fast:help+fast_spin'),
                           InlineKeyboardButton(fast_text, callback_data=fast_callback)],
                          [InlineKeyboardButton(core.get_lang(chat_id, 'settings_who_spin'),
                                                callback_data=f'settings:{chat_id}:restrict:help+who_spin'),
-                          InlineKeyboardButton(restrict_text, callback_data=restrict_callback)]])
+                          InlineKeyboardButton(restrict_text, callback_data=restrict_callback)],
+                         [InlineKeyboardButton(core.get_lang(chat_id, 'settings_show_list'),
+                                               callback_data=f'settings:{chat_id}:show_list:help+show_list'),
+                          InlineKeyboardButton(list_text, callback_data=list_callback)]])
 
     if callback:
         update.effective_message.edit_text(core.get_lang(chat_id, 'settings').format(chat_title),
@@ -655,6 +680,7 @@ dp.add_handler(CommandHandler('sudo', admin_shell, pass_args=True, allow_edited=
 dp.add_handler(CommandHandler('ping', ping))
 dp.add_handler(CommandHandler('setname', change_spin_name, pass_args=True, allow_edited=True))
 dp.add_handler(CommandHandler('count', spin_count))
+dp.add_handler(CommandHandler('userlist', user_list))
 dp.add_handler(CommandHandler('spin', do_the_spin))
 dp.add_handler(CommandHandler('sрin', do_the_spinn))
 dp.add_handler(CommandHandler('auto', auto_spin_config, pass_args=True, allow_edited=True,
@@ -665,12 +691,12 @@ dp.add_handler(CommandHandler('uptime', uptime))
 dp.add_handler(CommandHandler('winner', wotd, pass_args=True))
 dp.add_handler(feedback_handler)
 dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
-dp.add_handler(CallbackQueryHandler(pages_handler, pattern=r"^top:page_[1-9]+[0-9]*$"))
+dp.add_handler(CallbackQueryHandler(pages_handler, pattern=r"^(top|userlist):page_[1-9]+[0-9]*$"))
 dp.add_handler(CallbackQueryHandler(help_button_handler, pattern=r"^help:.+$"))
 dp.add_handler(CallbackQueryHandler(settings, pattern=r"^settings:-?\d+:main:$"))
 dp.add_handler(CallbackQueryHandler(lang_handler, pattern=r"^settings:-?\d+:lang:\w*$"))
-dp.add_handler(CallbackQueryHandler(two_state_handler, pattern=r"^settings:-?\d+:[a-z]+:[01]$"))
-dp.add_handler(CallbackQueryHandler(two_state_helper, pattern=r"^settings:-?\d+:[a-z]+:help\+[a-z_]+$"))
+dp.add_handler(CallbackQueryHandler(two_state_handler, pattern=r"^settings:-?\d+:[a-z_]+:[01]$"))
+dp.add_handler(CallbackQueryHandler(two_state_helper, pattern=r"^settings:-?\d+:[a-z_]+:help\+[a-z_]+$"))
 dp.add_handler(MessageHandler(Filters.all, update_cache, edited_updates=True), group=-1)
 
 dp.add_error_handler(handle_error)

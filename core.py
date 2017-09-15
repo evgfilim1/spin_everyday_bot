@@ -164,6 +164,7 @@ def save_all():
     _save(usernames, "unames.pkl")
     _save(wotd, "wotdwin.pkl")
     _save(wotd_registered, "wotdreg.pkl")
+    log.debug('Data saved')
 
 
 def clear_data(chat_id: int):
@@ -250,21 +251,35 @@ def choose_random_user(chat_id: int, bot: Bot) -> int:
     return user.id
 
 
+def pages(obj, page: int):
+    total_pages = len(obj) // config.PAGE_SIZE
+    begin = (page - 1) * config.PAGE_SIZE
+    end = begin + config.PAGE_SIZE
+    if len(obj) % config.PAGE_SIZE != 0:
+        total_pages += 1
+    return obj[begin:end], total_pages
+
+
 def top_win(chat_id: int) -> list:
     return sorted(results_total.get(chat_id, {}).items(), key=lambda x: x[1], reverse=True)
 
 
 def make_top(chat_id: int, *, page: int) -> (str, int):
     winners = top_win(chat_id)
-    total_pages = len(winners) // config.TOP_PAGE_SIZE
-    begin = (page - 1) * config.TOP_PAGE_SIZE
-    end = begin + config.TOP_PAGE_SIZE
-    if len(winners) % config.TOP_PAGE_SIZE != 0:
-        total_pages += 1
+    winners, total_pages = pages(winners, page)
     text = get_lang(chat_id, 'stats_all').format(page, total_pages)
-    for user in winners[begin:end]:
+    for user in winners:
         username = usernames.get(user[0], f"id{user[0]}")
         text += get_lang(chat_id, 'stats_user_short').format(username, user[1])
+    return text, total_pages
+
+
+def make_userlist(chat_id: int, page: int) -> (str, int):
+    users, total_pages = pages(chat_users[chat_id], page)
+    text = get_lang(chat_id, 'list').format(page, total_pages)
+    for user in users:
+        username = usernames.get(user, f'id{user}')
+        text += f'`{username}`\n'
     return text, total_pages
 
 
