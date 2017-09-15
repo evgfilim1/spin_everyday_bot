@@ -208,6 +208,10 @@ def str_to_time(s: str) -> time:
     return time((hours + offset) % 24, minutes, tzinfo=None)
 
 
+def mention_markdown(user_id: int, name: str) -> str:
+    return f'[{name}](tg://user?id={user_id})'
+
+
 def choose_random_user(chat_id: int, bot: Bot) -> int:
     global wotd
     from random import choice

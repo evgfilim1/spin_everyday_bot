@@ -306,8 +306,11 @@ def do_the_spinn(bot: Bot, update: Update):
     winner = core.results_today.get(chat_id)
     if winner is None or chat_id in locks:
         return
+    winner = update.message.from_user
+    if not winner.name.startswith('@'):
+        winner = core.mention_markdown(winner.id, winner.name)
     bot.send_message(chat_id=chat_id,
-                     text=core.get_lang(chat_id, 'already_spin').format(s=spin_name, n=update.message.from_user.name),
+                     text=core.get_lang(chat_id, 'already_spin').format(s=spin_name, n=winner),
                      parse_mode=ParseMode.MARKDOWN)
 
 
@@ -320,15 +323,20 @@ def do_the_spin(bot: Bot, update: Update):
     if chat_id in locks:
         return
     if winner is not None:
-        winner = core.usernames.get(winner, f'id{winner}')
-        bot.send_message(chat_id=chat_id, text=core.get_lang(chat_id, 'already_spin').format(s=spin_name, n=winner),
+        name = core.usernames.get(winner, f'id{winner}')
+        if not name.startswith('@'):
+            name = core.mention_markdown(winner, name)
+        bot.send_message(chat_id=chat_id, text=core.get_lang(chat_id, 'already_spin').format(s=spin_name, n=name),
                          parse_mode=ParseMode.MARKDOWN, disable_notification=True)
     else:
         if core.get_config_key(chat_id, 'restrict', default=False) and \
                 not core.is_admin_for_bot(chat_id, update.message.from_user.id, bot):
             update.message.reply_text(core.get_lang(chat_id, 'spin_restricted'))
             return
-        winner = escape_markdown(core.usernames.get(core.choose_random_user(chat_id, bot)))
+        user = core.choose_random_user(chat_id, bot)
+        winner = core.usernames.get(user)
+        if not winner.startswith('@'):
+            winner = core.mention_markdown(user, winner)
         from time import sleep
         curr_text = choice(core.get_lang(chat_id, 'default_spin_texts'))
         locks.append(chat_id)
