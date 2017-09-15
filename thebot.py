@@ -243,7 +243,8 @@ def svc_handler(bot: Bot, update: Update):
         for new_member in new_members:
             if new_member.is_bot:
                 return
-            core.chat_users[chat_id].append(new_member.id)
+            if new_member.id not in core.chat_users[chat_id]:
+                core.chat_users[chat_id].append(new_member.id)
             core.usernames.update({new_member.id: new_member.name})
     elif migrate_to_id:
         core.migrate(chat_id, migrate_to_id)
