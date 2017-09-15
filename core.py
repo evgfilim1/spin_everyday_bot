@@ -228,7 +228,7 @@ def choose_random_user(chat_id: int, bot: Bot) -> int:
     if user.first_name == '':
         usernames.update({user_id: f"DELETED/id{user_id}"})
         return choose_random_user(chat_id, bot)
-    # Waiting for PR #809 to merge, now using this behaviour
+    # FIXME: Waiting for PR #809 to merge, now using this behaviour
     if user.username:
         name = f'@{user.username}'
     elif user.last_name:
@@ -238,7 +238,7 @@ def choose_random_user(chat_id: int, bot: Bot) -> int:
     if chat_id:
         results_today.update({chat_id: user.id})
         if chat_id not in results_total:
-            results_today.update({chat_id: {}})
+            results_total.update({chat_id: {}})
         results_total[chat_id].update({user.id: results_total[chat_id].get(user.id, 0) + 1})
     else:
         wotd = user.id

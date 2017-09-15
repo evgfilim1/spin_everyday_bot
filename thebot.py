@@ -53,17 +53,19 @@ del tg_handler, tg_log, sock_log
 
 def handle_error(bot: Bot, update: Update, error):
     log.error(f"Update {update} caused error: {error}")
+    if config.SHOW_ERRORS:
+        update.effective_message.reply_text(core.get_lang(update.effective_chat.id, 'error'))
 
 
 def daily_job(bot: Bot, job: Job = None):
     core.results_today.clear()
     log.debug("Reset done")
-    uid = core.choose_random_user(0, bot)
-    text = choice(core.get_lang(uid, 'default_spin_texts'))[-1]
     try:
+        uid = core.choose_random_user(0, bot)
+        text = choice(core.get_lang(uid, 'default_spin_texts'))[-1]
         bot.send_message(uid, text.format(s=core.get_lang(uid, 'wotd'), n=core.usernames.get(uid)),
                          parse_mode=ParseMode.MARKDOWN)
-    except TelegramError:
+    except (TelegramError, IndexError):
         pass
     log.debug("Daily spin done")
 
@@ -246,10 +248,12 @@ def svc_handler(bot: Bot, update: Update):
     elif left_member and left_member.id == bot.id:
         core.clear_data(chat_id)
     elif left_member:
+        if left_member.is_bot:
+            return
         try:
             core.chat_users[chat_id].pop(core.chat_users[chat_id].index(left_member.id))
         except KeyError:
-            # Passing this because of bots and unknown users
+            # Passing this because of unknown users
             pass
 
 

@@ -40,5 +40,8 @@ LOG_TG_FORMAT = "*{name}*: #{levelname}\n```\n{message}\n```\n\n{asctime}"
 # Logging format (message format that will be written in `LOG_FILE` or console)
 LOG_FORMAT = '{levelname:<8} [{asctime}]: {name}: {message}'
 
+# If this is set to `False`, users will not be notified about errors
+SHOW_ERRORS = True
+
 # If specified key is missing from language file, translation will fallback to this language
 FALLBACK_LANG = "ru"
