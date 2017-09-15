@@ -631,6 +631,9 @@ def wotd(bot: Bot, update: Update, args: list):
                 update.effective_message.reply_text(core.get_lang(chat_id, 'wotd_registered'))
             else:
                 update.effective_message.reply_text(core.get_lang(chat_id, 'wotd_already_reg'))
+        if cmd == 'count':
+            update.effective_message.reply_text(core.get_lang(chat_id, 'user_count').format(len(core.wotd_registered)),
+                                                parse_mode=ParseMode.MARKDOWN)
 
 
 jobs.run_repeating(auto_save, 60)
