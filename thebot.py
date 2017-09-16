@@ -312,6 +312,8 @@ def do_the_spinn(bot: Bot, update: Update):
     winner = update.message.from_user
     if not winner.name.startswith('@'):
         winner = core.mention_markdown(winner.id, winner.name)
+    else:
+        winner = escape_markdown(winner)
     bot.send_message(chat_id=chat_id,
                      text=core.get_lang(chat_id, 'already_spin').format(s=spin_name, n=winner),
                      parse_mode=ParseMode.MARKDOWN)
@@ -329,6 +331,8 @@ def do_the_spin(bot: Bot, update: Update):
         name = core.usernames.get(winner, f'id{winner}')
         if not name.startswith('@'):
             name = core.mention_markdown(winner, name)
+        else:
+            name = escape_markdown(name)
         bot.send_message(chat_id=chat_id, text=core.get_lang(chat_id, 'already_spin').format(s=spin_name, n=name),
                          parse_mode=ParseMode.MARKDOWN, disable_notification=True)
     else:
@@ -340,6 +344,8 @@ def do_the_spin(bot: Bot, update: Update):
         winner = core.usernames.get(user)
         if not winner.startswith('@'):
             winner = core.mention_markdown(user, winner)
+        else:
+            winner = escape_markdown(winner)
         from time import sleep
         curr_text = choice(core.get_lang(chat_id, 'default_spin_texts'))
         locks.append(chat_id)
