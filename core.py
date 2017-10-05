@@ -6,7 +6,7 @@ import pickle
 from datetime import time
 
 from telegram import (ChatMember, ParseMode, TelegramError, Update, Bot)
-from telegram.ext import JobQueue
+from telegram.ext import JobQueue, BaseFilter
 from telegram.ext.dispatcher import run_async
 from os.path import exists
 import logging
@@ -27,6 +27,14 @@ class TelegramHandler(logging.Handler):
         msg = self.format(record)
         self.bot.send_message(chat_id=config.LOG_CHANNEL, text=msg, parse_mode=ParseMode.MARKDOWN)
 
+
+class _BotReply(BaseFilter):
+    def filter(self, message):
+        return bool(message.reply_to_message) and message.reply_to_message.from_user.id == message.bot.id
+
+
+bot_reply_filter = _BotReply()
+
 chat_users = {}
 usernames = {}
 spin_name = {}
@@ -39,6 +47,7 @@ chat_config = {}
 languages = {}
 wotd_registered = []
 wotd = 0
+chat_texts = {}
 
 announcement_chats = []
 log = None
@@ -108,7 +117,7 @@ def not_pm(f: callable):
         if is_private(msg.chat_id):
             msg.reply_text(get_lang(msg.chat_id, 'not_in_pm'))
             return
-        f(bot, update, *args, **kwargs)
+        return f(bot, update, *args, **kwargs)
 
     return wrapper
 
@@ -139,7 +148,7 @@ def _load_lang():
 
 def _load_all():
     global chat_users, usernames, spin_name, can_change_name, results_today, results_total
-    global auto_spins, chat_config, wotd_registered, wotd
+    global auto_spins, chat_config, wotd_registered, wotd, chat_texts
     chat_users = _load("users.pkl")
     usernames = _load("unames.pkl")
     spin_name = _load("spin.pkl")
@@ -150,6 +159,7 @@ def _load_all():
     chat_config = _load("config.pkl")
     wotd_registered = _load("wotdreg.pkl", default=list)
     wotd = _load("wotdwin.pkl", default=int)
+    chat_texts = _load("texts.pkl")
     _load_lang()
 
 
@@ -164,6 +174,7 @@ def save_all():
     _save(usernames, "unames.pkl")
     _save(wotd, "wotdwin.pkl")
     _save(wotd_registered, "wotdreg.pkl")
+    _save(chat_texts, "texts.pkl")
     log.debug('Data saved')
 
 
@@ -233,7 +244,6 @@ def choose_random_user(chat_id: int, bot: Bot) -> int:
     if user.first_name == '':
         usernames.update({user_id: f"DELETED/id{user_id}"})
         return choose_random_user(chat_id, bot)
-    # FIXME: Waiting for PR #809 to merge, now using this behaviour
     if user.username:
         name = f'@{user.username}'
     elif user.last_name:

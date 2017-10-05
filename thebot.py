@@ -347,7 +347,10 @@ def do_the_spin(bot: Bot, update: Update):
         else:
             winner = escape_markdown(winner)
         from time import sleep
-        curr_text = choice(core.get_lang(chat_id, 'default_spin_texts'))
+        spin_texts = core.get_lang(chat_id, 'default_spin_texts')
+        if chat_id in core.chat_texts:
+            spin_texts += core.chat_texts[chat_id]
+        curr_text = choice(spin_texts)
         locks.append(chat_id)
         if core.get_config_key(chat_id, 'fast', default=False):
             bot.send_message(chat_id=chat_id, text=curr_text[-1].format(s=spin_name, n=winner),
@@ -635,9 +638,14 @@ def send_feedback(bot: Bot, update: Update):
     return ConversationHandler.END
 
 
-def cancel_feedback(bot: Bot, update: Update):
-    update.message.reply_text(core.get_lang(update.effective_chat.id, 'feedback_cancelled'),
+def cancel_conversation(bot: Bot, update: Update, **kwargs):
+    update.message.reply_text(core.get_lang(update.effective_chat.id, 'cancelled'),
                               reply_markup=ReplyKeyboardRemove(selective=True))
+    try:
+        kwargs['chat_data'].pop('texts')
+    except (KeyError, ValueError):
+        pass
+
     return ConversationHandler.END
 
 
@@ -668,15 +676,139 @@ def wotd(bot: Bot, update: Update, args: list):
                                                 parse_mode=ParseMode.MARKDOWN)
 
 
+@core.not_pm
+def new_text(bot: Bot, update: Update, chat_data: dict):
+    chat_id = update.message.chat_id
+    if not core.is_admin_for_bot(chat_id, update.message.from_user.id, bot):
+        update.message.reply_text(core.get_lang(chat_id, 'not_admin'))
+        return
+    update.message.reply_text(core.get_lang(chat_id, 'newtext_prompt'),
+                              parse_mode=ParseMode.MARKDOWN)
+    chat_data['p_user'] = update.message.from_user.id
+    return 0
+
+
+def fill_text(bot: Bot, update: Update, chat_data: dict):
+    chat_id = update.message.chat_id
+    if update.message.from_user.id != chat_data.get('p_user'):
+        return
+    if chat_data.get('texts') is None:
+        chat_data['texts'] = []
+    try:
+        update.message.text_markdown.format(s='test', n='@user')
+    except (ValueError, KeyError, TelegramError):
+        update.message.reply_text(core.get_lang(chat_id, 'newtext_invalid'))
+        return
+    chat_data['texts'].append(update.message.text_markdown)
+
+
+def remove_text(bot: Bot, update: Update, chat_data: dict):
+    if update.message.from_user.id != chat_data.get('p_user'):
+        return
+    if not update.message.reply_to_message:
+        return
+    try:
+        i = chat_data.get('texts', []).index(update.message.reply_to_message.text)
+        chat_data['texts'].pop(i)
+        update.message.reply_text(core.get_lang(update.message.chat_id, 'newtext_deleted'))
+    except ValueError:
+        pass
+
+
+def record_text(bot: Bot, update: Update, chat_data: dict):
+    chat_id = update.message.chat_id
+    if update.message.from_user.id != chat_data.get('p_user'):
+        return
+    texts = chat_data.get('texts')
+    if texts is None:
+        update.message.reply_text(core.get_lang(chat_id, 'newtext_empty'))
+        return
+    text = core.get_lang(chat_id, 'newtext_added')
+    for line in texts:
+        text += line.format(s='test', n=update.message.from_user.name) + '\n'
+    update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(selective=True))
+    if chat_id not in core.chat_texts:
+        core.chat_texts[chat_id] = []
+    core.chat_texts[chat_id].append(chat_data.pop('texts'))
+    return ConversationHandler.END
+
+
+@core.not_pm
+def list_text(bot: Bot, update: Update):
+    chat_id = update.message.chat_id
+    text = core.get_lang(chat_id, 'texts_list') + '\n\n'
+    spin_name = escape_markdown(core.spin_name.get(chat_id, core.get_lang(chat_id, 'default_spin_name')))
+    for line in core.chat_texts.get(chat_id, [[]])[0]:
+        text += line.format(s=spin_name, n=update.message.from_user.name) + '\n'
+    count = len(core.chat_texts.get(chat_id, []))
+    text = text.format(1, count)
+    if count > 0:
+        keyboard = [[InlineKeyboardButton(core.get_lang(chat_id, 'delete'), callback_data='texts:1:del')]]
+        if count > 1:
+            keyboard[0].append(InlineKeyboardButton('>>', callback_data='texts:2:'))
+    else:
+        keyboard = [[]]
+    update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=InlineKeyboardMarkup(keyboard))
+
+
+def text_handler(bot: Bot, update: Update):
+    query = update.callback_query
+    _, page, _del = query.data.split(':')
+    page = int(page)
+    _del = _del == 'del'
+    msg = query.message
+    chat_id = msg.chat_id
+
+    if _del:
+        if not core.is_admin_for_bot(chat_id, query.from_user.id, bot):
+            query.answer(core.get_lang(chat_id, 'not_admin'))
+            return
+        core.chat_texts[chat_id].pop(page - 1)
+        query.answer(core.get_lang(chat_id, 'success'))
+
+    text = core.get_lang(chat_id, 'texts_list') + '\n\n'
+    spin_name = escape_markdown(core.spin_name.get(chat_id, core.get_lang(chat_id, 'default_spin_name')))
+    try:
+        for line in core.chat_texts.get(chat_id)[page - 1]:
+            text += line.format(s=spin_name, n=query.from_user.name) + '\n'
+    except IndexError:
+        pass
+    count = len(core.chat_texts.get(chat_id, []))
+    text = text.format(page, count)
+    keyboard = [[]]
+    if page > 1:
+        keyboard[0].append(InlineKeyboardButton('<<', callback_data=f'texts:{page - 1}:'))
+    if count > 0:
+        keyboard[0].append(InlineKeyboardButton(core.get_lang(chat_id, 'delete'), callback_data=f'texts:{page}:del'))
+    if page < count:
+        keyboard[0].append((InlineKeyboardButton('>>', callback_data=f'texts:{page + 1}:')))
+
+    try:
+        query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard),
+                                parse_mode=ParseMode.MARKDOWN)
+    except TelegramError:
+        pass
+
+
 jobs.run_repeating(auto_save, 60)
 jobs.run_daily(daily_job, core.str_to_time(config.RESET_TIME))
 
 feedback_handler = ConversationHandler(
     entry_points=[CommandHandler('feedback', ask_feedback)],
     states={
-        0: [MessageHandler(Filters.reply & (Filters.text | Filters.photo | Filters.document), send_feedback)]
+        0: [MessageHandler(core.bot_reply_filter & (Filters.text | Filters.photo | Filters.document), send_feedback)]
     },
-    fallbacks=[CommandHandler('cancel', cancel_feedback)]
+    fallbacks=[CommandHandler('cancel', cancel_conversation)]
+)
+
+new_text_handler = ConversationHandler(
+    entry_points=[CommandHandler('newtext', new_text, pass_chat_data=True)],
+    states={
+        0: [MessageHandler(Filters.text, fill_text, pass_chat_data=True)]
+    },
+    fallbacks=[CommandHandler('cancel', cancel_conversation, pass_chat_data=True),
+               CommandHandler('done', record_text, pass_chat_data=True),
+               CommandHandler('remove', remove_text, pass_chat_data=True)]
 )
 
 dp.add_handler(CommandHandler(['start', 'help'], start_help_handler, pass_args=True))
@@ -696,9 +828,12 @@ dp.add_handler(CommandHandler('stat', top, pass_args=True))
 dp.add_handler(CommandHandler('settings', settings))
 dp.add_handler(CommandHandler('uptime', uptime))
 dp.add_handler(CommandHandler('winner', wotd, pass_args=True))
+dp.add_handler(CommandHandler('mytexts', list_text))
+dp.add_handler(new_text_handler)
 dp.add_handler(feedback_handler)
 dp.add_handler(MessageHandler(Filters.status_update, svc_handler))
 dp.add_handler(CallbackQueryHandler(pages_handler, pattern=r"^(top|userlist):page_[1-9]+[0-9]*$"))
+dp.add_handler(CallbackQueryHandler(text_handler, pattern=r"^texts:[1-9]+[0-9]*:(del)?$"))
 dp.add_handler(CallbackQueryHandler(help_button_handler, pattern=r"^help:.+$"))
 dp.add_handler(CallbackQueryHandler(settings, pattern=r"^settings:-?\d+:main:$"))
 dp.add_handler(CallbackQueryHandler(lang_handler, pattern=r"^settings:-?\d+:lang:\w*$"))
