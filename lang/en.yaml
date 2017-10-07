@@ -1,0 +1,196 @@
+# SpinEverydayBot English strings.
+# Copyright © 2017 Evgeniy Filimonov <https://t.me/evgfilim1>. Translated by Roman Gershunin <https://t.me/gershik>
+
+_name: "\U0001f1ec\U0001f1e7 English"
+settings: "Bot settings for {0}"
+settings_changed: "Changed!"
+settings_on: "✅"
+settings_off: "☑️"
+settings_turned_on: "On!"
+settings_turned_off: "Off!"
+settings_lang: "Language"
+settings_fast_spin: "Quick spin"
+settings_who_spin: "Restrict who can spin"
+settings_show_list: "List of participiants"
+settings_back: "⬅️ To menu"
+settings_lang_prompt: "Choose chat language"
+settings_fast_spin_caption: "While this is on, only the result of the raffle is shown"
+settings_who_spin_caption: "While this is on, only admins can start the raffle"
+settings_show_list_caption: "While this is on, non-admins can see the list of participiants"
+pm_banned: "Firstly, start or unblock me in your personal messages"
+start_pm_button: "Text the bot privately"
+not_in_pm: "This command is only avalible in groups"
+check_pm: "Sent privately"
+default_spin_name: "noname"
+spin_name_current: "Current raffle name: *{0} of the day*"
+spin_name_changed: "Raffle name changed to *{0} of the day*"
+wotd: "global raffle winner"
+wotd_already_reg: "You are already registered"
+wotd_registered: "You are now taking part in the global raffle"
+wotd_nostats: "The global raffle doesn't have a winner yet"
+already_spin: "According to today's spin, the *{s} of the day* is {n}"
+default_spin_texts:
+    -
+        - "So, who's the *{s} of the day*?"
+        - "_Hmm, interesting..._"
+        - "*AHA!*"
+        - "You're the *{s} of the day,* {n}"
+    -
+        - "*The Saṃsāra wheel started spinning!*"
+        - "_WTF?!_"
+        - "Ok then..."
+        - "Congratulations, you're the *{s} of the day,* {n}"
+    -
+        - "Hey, are you sure?"
+        - "Are you *really* sure?"
+        - "The process can't be stopped anyway, though."
+        - "Today I assign you the position of the *{s} of the day*, {n}!"
+    -
+        - "_Searching for a random cat outdoors..._"
+        - "_Searching for a stick..._"
+        - "_Searching for a hat..._"
+        - "_Drawing an ASCII-art..._"
+        - "*Done!*"
+        - "```\n
+.∧＿∧\n
+( ･ω･｡)つ━☆・*。\n
+⊂　 ノ 　　　・゜+.\n
+しーＪ　　　°。+ *´¨)\n
+　　　　　　　　　.· ´¸.·*´¨) ¸.·*¨)\n
+　　　　　　　　　　(¸.·´ (¸.·'* ☆ WHOOSH, YOU ARE THE {s} OF THE DAY, ```{n}"
+spin_suffix: "of the day"
+spin_restricted: "Only admins can start the raffle in this group"
+locked_buttons: "You can't use buttons during the raffle"
+help_short: "*Hi!* I'm a bot for daily raffles in chats.\n
+*Usage:*\n
+/settings - _Settigs_\n
+/setname - _View or change the raffle name_\n
+/count - _Check the amount of raffle participiants_\n
+/spin - _Start the raffle_\n
+/stat - _Raffle stats_\n
+/feedback - _Send feedback_\n\n"
+help_moreinfo_chat: "You can learn more about the bot by texting me privately."
+help_moreinfo_pm: "You can learn more about the bot with the /help command."
+help_texts:
+    main:
+        - |
+            To learn more about the bot, enter /about.
+            To get help, enter /start.
+            Choose a command to learn more about it.
+        -
+            settings:
+                summary: Bot settings.
+                usage:
+                    '':
+                        text: Send chat settings menu privately
+                        admin: yes
+            setname:
+                summary: View or change the raffle name.
+                usage:
+                    '':
+                        text: View the raffle name
+                    'TEXT':
+                        text: Set TEXT as the raffle name
+                        admin: yes
+            admgroup:
+                summary: Configure bot admins in the group
+                usage:
+                    add:
+                        text: Add admin
+                        admin: yes
+                        reply: yes
+                    del:
+                        text: Revoke admin
+                        admin: yes
+                        reply: yes
+                    list:
+                        text: Show full admins list
+            count:
+                summary: Counts the amount of raffle participiants.
+                usage:
+                    '':
+                        text: Get the amount of raffle participiants in this group
+            userlist:
+                summary: Shows the list of raffle participiants.
+                usage:
+                    '':
+                        text: "Show the paginal list of participiants (if the feature is enabled in settings)"
+            spin:
+                summary: Starts the raffle.
+                usage:
+                    '':
+                        text: "Start the raffle. If it  was started earlier today, show the result"
+            winner:
+                summary: Winner of the global daily raffle!
+                usage:
+                    '':
+                        text: Show the result of the global raffle
+                    register:
+                        text: Take part in the global raffle
+            auto:
+                summary: Control automatic daily raffles.
+                usage:
+                    set TIME:
+                        text: "Set automatic raffles to UTC+0 (CEST+2) TIME. Time should be in the ```HH:MM``` format"
+                        admin: yes
+                    del:
+                        text: Disable automatic raffles in this group
+                        admin: yes
+                    status:
+                        text: Check the state of automatic raffles
+            stat:
+                summary: Show stats.
+                usage:
+                    '':
+                        text: "Show stats for the chat or a specific user by replying with this command"
+                    me:
+                        text: Show my stats
+                        reply: yes
+            ping:
+                summary: Check bot work capacity.
+                usage:
+                    '':
+                        text: Replies with "Ping? Pong!"
+            feedback:
+                summary: Send feedback to the bot developer.
+                usage:
+                    '':
+                        text: Reply with your feedback to the bot.
+            uptime:
+                summary: Check bot uptime.
+                usage:
+                    '':
+                        text: Send the bot's uptime
+helpbuttons_back: Back
+help_usage: "*Usage:*"
+help_onlyadmin: "(only for admins)"
+help_onlyreply: "(in reply to the required user)"
+about_text: |
+    *SpinEverydayBot {0}*
+    Contact {1} for any information
+    The bot is licensed under [GNU AGPLv3](https://www.gnu.org/licenses/#AGPL)
+    [Bot repo]({2})
+    [News channel](https://t.me/SpinEverydayBot_news)
+user_count: "Amount of raffle participiants: _{0}_"
+time_error: "Error! Check the time for correctness and edit your message"
+auto_spin_on: "Automatic raffles are set in this group for {0} UTC+0"
+auto_spin_off: "Automatic raffles are disabled in this group"
+auto_spin_set_off: "Automatic raffles are now disabled in this group"
+auto_spin_still_off: "Automatic raffles weren't yet enabled in this group"
+stats_me: "Your stats:\n*{0}*: {1} time(s)"
+stats_user: "*{0}* stats: {1} time(s)"
+stats_user_short: "*{0}*: {1} time(s)\n"
+stats_all: "User stats for this group: (page {0} of {1})\n"
+list: "List of raffle participiants for this group: (page {0} of {1})\n"
+list_off: "To show the users list, you need to turn that feature on in /settings"
+admin_allow: "Now this user *is a bot admin*"
+admin_still_allow: "This user is *already a bot admin*"
+admin_deny: "Now this user *is not a bot admin*"
+admin_still_deny: "This user *is a bot admin yet*"
+admin_list: "Users, that *are bot admins* (except for group admins):\n```\n{0}\n```"
+not_admin: "Access denied"
+feedback_prompt: "Enter a message which will be sent to the bot admin\nThe bot accepts text, images and files\nEnter /cancel to cancel"
+feedback_sent: "Your message is sent"
+feedback_cancelled: "Cancelled"
+uptime: "The bot is up for {0}"
+error: "Error while processing the message."
