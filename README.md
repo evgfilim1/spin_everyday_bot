@@ -1,35 +1,45 @@
-# SpinEverydayBot by @evgfilim1
-## Preparing
-
-Check that you have `python3.6` and `pip` installed, then run this command in your shell:
-```bash 
-sudo pip3 install -r requirements.txt
-```
-If you want to use [TeleSocket Service](https://pypi.python.org/pypi/TeleSocketClient), 
-append `TeleSocketClient` to the command:
-```bash
-sudo pip3 install -r requirements.txt TeleSocketClient
-```
-**For Windows users**: instead of typing `sudo` in command prompt, run `cmd.exe` as Administrator;
- instead of `pip3`, use `pip`
+# SpinEverydayBot
 
 ## Setting up
 
-Do these steps to set up the bot:
+* Check that you have Python 3.6+ and pip installed:
 ```bash
-git clone https://github.com/evgfilim1/spin_everyday_bot.git
-cd spin_everyday_bot
-cp config_example.py config.py
+$ python3 --version
+Python 3.6.2
+$ pip3 --version
+pip 9.0.1 from /usr/lib/python3.6/site-packages (python 3.6)
 ```
-Now open `config.py` in your favourite text editor and change example values to suit your needs
 
+* Clone the repository
+```bash
+$ git clone https://github.com/evgfilim1/spin_everyday_bot.git
+$ cd spin_everyday_bot
+```
+* Copy example config file
+```bash
+$ cp config_example.py config.py
+```
 **For Windows users:** use `copy` instead of `cp`
+
+* Now open `config.py` in your favourite text editor and change default values to suit your needs
+* Install dependencies
+```bash
+$ pip3 install -U -r requirements.txt
+```
+
+**Note**: If you want to use [TeleSocket Service](https://pypi.python.org/pypi/TeleSocketClient), 
+append `TeleSocketClient` to the command:
+```bash
+$ pip3 install -U -r requirements.txt TeleSocketClient
+```
+**For Windows users:** use `pip` instead of `pip3` 
+
 
 ## Running bot:
 
-Simply type in your shell:
+It is very easy:
 ```bash 
-python3.6 thebot.py
+$ python3 thebot.py
 ```
 
-**For Windows users:** use `python3` or `python` instead of `python3.6`
+**For Windows users:** use `python` or `py` instead of `python3.6`
