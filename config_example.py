@@ -7,14 +7,14 @@
 # You can find out necessary IDs from @ShowJsonBot
 
 # Repository URL to be shown in /about
-REPO_URL = "https://github.com/evgfilim1/spin_everyday_bot"
+REPO_URL = 'https://github.com/evgfilim1/spin_everyday_bot'
 
 # Your bot's token, which you can get from @BotFather
-BOT_TOKEN = "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi"
+BOT_TOKEN = '123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi'
 
 # Your TeleSocket service token, which you can get from @TeleSocketBot
 # Set `None` if you don't want to use TeleSocket Service
-TELESOCKET_TOKEN = "1234567890abcdef1234567890abcdef1234567890abcdef"
+TELESOCKET_TOKEN = '1234567890abcdef1234567890abcdef1234567890abcdef'
 
 # Your Telegram User ID
 BOT_CREATOR = 123456987
@@ -22,20 +22,20 @@ BOT_CREATOR = 123456987
 # How much users will be shown on one page
 PAGE_SIZE = 10
 
-# Time of resetting spin results (in GMT)
-RESET_TIME = "21:00"
+# Time of resetting spin results (in UTC)
+RESET_TIME = '21:00'
 
 # Logging channel. You can put here "@telegramChannelName" or channel's ID
 # If you don't want to use logging to Telegram, set this to `None`
-LOG_CHANNEL = ""
+LOG_CHANNEL = ''
 
 # Log file
 # If you want to use logging to console instead of writing logs to file, set this to `None`
-LOG_FILE = "data/bot.log"
+LOG_FILE = 'data/bot.log'
 
 # Log formats. For more info, look 'https://docs.python.org/3/library/logging.html#logrecord-attributes'
 # Telegram logging format (message format that will be sent to `LOG_CHANNEL`)
-LOG_TG_FORMAT = "*{name}*: #{levelname}\n```\n{message}\n```\n\n{asctime}"
+LOG_TG_FORMAT = '*{name}*: #{levelname}\n```\n{message}\n```\n\n{asctime}'
 
 # Logging format (message format that will be written in `LOG_FILE` or console)
 LOG_FORMAT = '{levelname:<8} [{asctime}]: {name}: {message}'
@@ -44,4 +44,4 @@ LOG_FORMAT = '{levelname:<8} [{asctime}]: {name}: {message}'
 SHOW_ERRORS = True
 
 # If specified key is missing from language file, translation will fallback to this language
-FALLBACK_LANG = "ru"
+FALLBACK_LANG = 'ru'
