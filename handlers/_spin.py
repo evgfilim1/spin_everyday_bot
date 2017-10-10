@@ -20,6 +20,7 @@ def auto_spin(bot, job):
 
 
 @run_async
+@utils.flood_limit
 @utils.not_pm
 def do_the_spin(bot, update):
     chat_id = update.message.chat_id
@@ -63,6 +64,7 @@ def do_the_spin(bot, update):
         locks.pop(locks.index(chat_id))
 
 
+@utils.flood_limit
 @utils.not_pm
 def change_spin_name(bot, update, args: list):
     msg = update.effective_message
@@ -82,6 +84,7 @@ def change_spin_name(bot, update, args: list):
         msg.reply_text(utils.get_lang(msg.chat_id, 'not_admin'))
 
 
+@utils.flood_limit
 @utils.not_pm
 def auto_spin_config(bot, update, args, job_queue):
     msg = update.effective_message

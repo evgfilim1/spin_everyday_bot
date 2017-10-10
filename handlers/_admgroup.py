@@ -9,6 +9,7 @@ import utils
 import config
 
 
+@utils.flood_limit
 @utils.not_pm
 def admin_ctrl(bot, update, args):
     msg = update.effective_message

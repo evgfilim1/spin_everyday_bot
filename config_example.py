@@ -45,3 +45,6 @@ SHOW_ERRORS = True
 
 # If specified key is missing from language file, translation will fallback to this language
 FALLBACK_LANG = 'ru'
+
+# Command limit per minute
+FLOOD_LIMIT = 7

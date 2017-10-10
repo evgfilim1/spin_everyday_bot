@@ -8,13 +8,16 @@ import data
 import utils
 
 
-def settings(bot, update):
-    if update.callback_query:
-        callback = True
+@utils.flood_limit
+def settings_command(*args, **kwargs):
+    settings(callback=False, *args, **kwargs)
+
+
+def settings(bot, update, callback=True):
+    if callback:
         chat_id = int(update.callback_query.data.split(':')[1])
         chat_title = bot.get_chat(chat_id).title
     else:
-        callback = False
         chat_id = update.effective_chat.id
         chat_title = update.effective_chat.title
 

@@ -27,7 +27,7 @@ dp = updater.dispatcher
 utils.set_up_logger('telegram.ext', logging.INFO)
 utils.set_up_logger('TeleSocket', logging.INFO)
 
-jobs.run_repeating(handlers.auto_save, 60)
+jobs.run_repeating(handlers.hourly_job, 60)
 jobs.run_daily(handlers.daily_job, utils.str_to_time(config.RESET_TIME))
 
 feedback_handler = ConversationHandler(
@@ -62,7 +62,7 @@ dp.add_handler(CommandHandler('spin', handlers.do_the_spin))
 dp.add_handler(CommandHandler('auto', handlers.auto_spin_config, pass_args=True, allow_edited=True,
                               pass_job_queue=True))
 dp.add_handler(CommandHandler('stat', handlers.top, pass_args=True))
-dp.add_handler(CommandHandler('settings', handlers.settings))
+dp.add_handler(CommandHandler('settings', handlers.settings_command))
 dp.add_handler(CommandHandler('uptime', handlers.uptime))
 dp.add_handler(CommandHandler('winner', handlers.wotd, pass_args=True))
 dp.add_handler(CommandHandler('mytexts', handlers.list_text))

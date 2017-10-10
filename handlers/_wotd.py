@@ -8,6 +8,7 @@ import data
 import utils
 
 
+@utils.flood_limit
 def wotd(bot, update, args):
     chat_id = update.effective_chat.id
     user_id = update.effective_user.id

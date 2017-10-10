@@ -57,6 +57,7 @@ def pages_handler(bot, update):
         pass
 
 
+@utils.flood_limit
 @utils.not_pm
 def top(bot, update, args):
     chat_id = update.message.chat_id
@@ -83,6 +84,7 @@ def top(bot, update, args):
                               reply_markup=InlineKeyboardMarkup(reply_keyboard))
 
 
+@utils.flood_limit
 @utils.not_pm
 def user_list(bot, update):
     chat_id = update.message.chat_id

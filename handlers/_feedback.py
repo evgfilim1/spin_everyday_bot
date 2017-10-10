@@ -9,6 +9,7 @@ import config
 import utils
 
 
+@utils.flood_limit
 def ask_feedback(bot, update):
     update.message.reply_text(utils.get_lang(update.effective_chat.id, 'feedback_prompt'),
                               reply_markup=ForceReply(selective=True))

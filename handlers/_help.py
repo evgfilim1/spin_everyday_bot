@@ -32,6 +32,7 @@ def helper(bot, update, short):
     update.message.reply_text(text=text, parse_mode=ParseMode.MARKDOWN, reply_markup=InlineKeyboardMarkup(keys))
 
 
+@utils.flood_limit
 def start_help_handler(bot, update, args):
     if (len(args) > 0 and args[0] == 'help') or (utils.is_private(update.message.chat_id) and
                                                  not update.message.text.startswith('/start')):
@@ -40,6 +41,7 @@ def start_help_handler(bot, update, args):
         helper(bot, update, short=True)
 
 
+@utils.flood_limit
 def about(bot, update):
     git_version = check_output('git describe --tags', shell=True)[:-1].decode()
     version = re.sub(r'-(\d+)-g([a-z0-9]{7})', r'.r\1.\2', git_version)

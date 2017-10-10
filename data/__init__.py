@@ -6,6 +6,7 @@ import pickle
 from os import listdir
 from os.path import exists
 from yaml import load
+from collections import Counter
 
 chat_users = {}
 usernames = {}
@@ -20,6 +21,7 @@ languages = {}
 wotd_registered = []
 wotd = 0
 chat_texts = {}
+flood = Counter()
 
 
 def _load(filename: str, default: type = dict):

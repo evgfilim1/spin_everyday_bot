@@ -10,6 +10,7 @@ import data
 import utils
 
 
+@utils.flood_limit
 @utils.not_pm
 def new_text(bot, update, chat_data):
     chat_id = update.message.chat_id
@@ -67,6 +68,7 @@ def record_text(bot, update, chat_data: dict):
     return ConversationHandler.END
 
 
+@utils.flood_limit
 @utils.not_pm
 def list_text(bot, update):
     chat_id = update.message.chat_id

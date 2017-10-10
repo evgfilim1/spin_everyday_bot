@@ -91,12 +91,29 @@ def is_private(chat_id) -> bool:
 
 def not_pm(f):
     @wraps(f)
-    def wrapper(bot: Bot, update: Update, *args, **kwargs):
+    def wrapper(bot, update, *args, **kwargs):
         msg = update.effective_message
         if is_private(msg.chat_id):
             msg.reply_text(get_lang(msg.chat_id, 'not_in_pm'))
             return
         return f(bot, update, *args, **kwargs)
+
+    return wrapper
+
+
+def flood_limit(f):
+    @wraps(f)
+    def wrapper(bot, update, *args, **kwargs):
+        chat_id = update.effective_chat.id
+        count = data.flood[chat_id]
+        if count == config.FLOOD_LIMIT:
+            data.flood[chat_id] += 1
+            update.effective_message.reply_text(get_lang(chat_id, 'flood_lim'))
+        if count >= config.FLOOD_LIMIT:
+            return
+        else:
+            data.flood[chat_id] += 1
+            return f(bot, update, *args, **kwargs)
 
     return wrapper
 

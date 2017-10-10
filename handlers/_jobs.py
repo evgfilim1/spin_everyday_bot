@@ -26,5 +26,6 @@ def daily_job(bot, job=None):
     log.debug('Daily spin done')
 
 
-def auto_save(bot=None, job=None):
+def hourly_job(bot=None, job=None):
     data.save_all()
+    data.flood.clear()
