@@ -74,14 +74,16 @@ def list_text(bot, update):
     chat_id = update.message.chat_id
     text = utils.get_lang(chat_id, 'texts_list') + '\n\n'
     spin_name = escape_markdown(data.spin_name.get(chat_id, utils.get_lang(chat_id, 'default_spin_name')))
+    count = len(data.chat_texts.get(chat_id, []))
+    if count == 0:
+        update.message.reply_text(utils.get_lang(chat_id, 'no_texts'))
+        return
     for line in data.chat_texts.get(chat_id, [[]])[0]:
         text += line.format(s=spin_name, n=update.message.from_user.name) + '\n'
-    count = len(data.chat_texts.get(chat_id, []))
     text = text.format(1, count)
-    if count > 0:
-        keyboard = [[InlineKeyboardButton(utils.get_lang(chat_id, 'delete'), callback_data='texts:1:del')]]
-        if count > 1:
-            keyboard[0].append(InlineKeyboardButton('>>', callback_data='texts:2:'))
+    keyboard = [[InlineKeyboardButton(utils.get_lang(chat_id, 'delete'), callback_data='texts:1:del')]]
+    if count > 1:
+        keyboard[0].append(InlineKeyboardButton('>>', callback_data='texts:2:'))
     else:
         keyboard = [[]]
     update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=InlineKeyboardMarkup(keyboard))
@@ -101,15 +103,16 @@ def text_handler(bot, update):
             return
         data.chat_texts[chat_id].pop(page - 1)
         query.answer(utils.get_lang(chat_id, 'success'))
+        page -= 1
 
     text = utils.get_lang(chat_id, 'texts_list') + '\n\n'
     spin_name = escape_markdown(data.spin_name.get(chat_id, utils.get_lang(chat_id, 'default_spin_name')))
-    try:
-        for line in data.chat_texts.get(chat_id)[page - 1]:
-            text += line.format(s=spin_name, n=query.from_user.name) + '\n'
-    except IndexError:
-        pass
     count = len(data.chat_texts.get(chat_id, []))
+    if count == 0:
+        query.edit_message_text(utils.get_lang(chat_id, 'no_texts'))
+        return
+    for line in data.chat_texts.get(chat_id)[page - 1]:
+        text += line.format(s=spin_name, n=query.from_user.name) + '\n'
     text = text.format(page, count)
     keyboard = [[]]
     if page > 1:

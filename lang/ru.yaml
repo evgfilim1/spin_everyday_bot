@@ -222,6 +222,7 @@ newtext_invalid: >
 newtext_deleted: "Удалено!"
 newtext_added: "*Новые тексты добавлены!*\n\n"
 texts_list: "Настраиваемые тексты розыгрышей в данном чате (текст {0} из {1}):"
+no_texts: "В этом чате нет текстов"
 delete: "Удалить"
 cancelled: "Отменено"
 success: "Успешно!"
