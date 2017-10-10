@@ -191,6 +191,19 @@ admin_list: "Users, that *are bot admins* (except for group admins):\n```\n{0}\n
 not_admin: "Access denied"
 feedback_prompt: "Enter a message which will be sent to the bot admin\nThe bot accepts text, images and files\nEnter /cancel to cancel"
 feedback_sent: "Your message is sent"
-feedback_cancelled: "Cancelled"
++newtext_prompt: |
+ +    Enter custom raffle texts for your group.
+ +    Keywords: `{s}` —> raffle name, `{n}` —> winner.
+ +    For text formatting, use your client's built-in Markdown.
+ +    Use /cancel to cancel, /done when you're done. To remove a message, reply to it with /remove.
+ +newtext_empty: "No custom texts."
+ +newtext_invalid: >
+ +    Error with text formatting. Check your text for Markdown issues and extra {}
+ +newtext_deleted: "Removed!"
+ +newtext_added: "*Custom texts added!*\n\n"
+ +texts_list: "Customizable taffle texts for this chat (text {0} of {1}):"
+ +delete: "Remove"
+ +cancelled: "Cancelled"
+ +success: "Success!"
 uptime: "The bot is up for {0}"
 error: "Error while processing the message."
