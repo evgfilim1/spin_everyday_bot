@@ -48,7 +48,7 @@ def do_the_spin(bot, update):
         else:
             winner = escape_markdown(winner)
         from time import sleep
-        spin_texts = utils.get_lang(chat_id, 'default_spin_texts')
+        spin_texts = utils.get_lang(chat_id, 'default_spin_texts').copy()
         if chat_id in data.chat_texts:
             spin_texts += data.chat_texts[chat_id]
         curr_text = choice(spin_texts)
