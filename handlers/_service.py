@@ -37,7 +37,7 @@ def svc_handler(bot, update):
     if update.message.group_chat_created or \
             (len(new_members) != 0 and any(new_member.id == bot.id for new_member in new_members)):
         # TODO: add admins to the list
-        log.info(f'New chat! ({chat_id})')
+        log.debug(f'New chat! ({chat_id})')
         data.chat_users[chat_id] = []
         data.can_change_name[chat_id] = []
         start_help_handler(bot, update, [])
@@ -49,8 +49,10 @@ def svc_handler(bot, update):
                 data.chat_users[chat_id].append(new_member.id)
             data.usernames.update({new_member.id: new_member.name})
     elif migrate_to_id:
+        log.debug(f'Migrating from {chat_id} to {migrate_to_id}')
         data.migrate(chat_id, migrate_to_id)
     elif left_member and left_member.id == bot.id:
+        log.debug(f'Clearing data of chat {chat_id}')
         data.clear_chat_data(chat_id)
     elif left_member:
         if left_member.is_bot:
