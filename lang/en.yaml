@@ -120,6 +120,17 @@ help_texts:
                 usage:
                     '':
                         text: "Start the raffle. If it  was started earlier today, show the result"
+            newtext:
+                summary: Adds a new raffle text (only for the current group).
+                usage:
+                    '':
+                        text: Start adding new texts
+                        admin: yes
+            chattexts:
+                summary: This group's custom texts lixt.
+                usage:
+                    '':
+                        text: Show a paginal list of this group's custom texts         
             winner:
                 summary: Winner of the global daily raffle!
                 usage:
@@ -127,6 +138,8 @@ help_texts:
                         text: Show the result of the global raffle
                     register:
                         text: Take part in the global raffle
+                    count:
+                        text: Show the amount of global raffle participiants
             auto:
                 summary: Control automatic daily raffles.
                 usage:
@@ -191,19 +204,21 @@ admin_list: "Users, that *are bot admins* (except for group admins):\n```\n{0}\n
 not_admin: "Access denied"
 feedback_prompt: "Enter a message which will be sent to the bot admin\nThe bot accepts text, images and files\nEnter /cancel to cancel"
 feedback_sent: "Your message is sent"
-+newtext_prompt: |
- +    Enter custom raffle texts for your group.
- +    Keywords: `{s}` —> raffle name, `{n}` —> winner.
- +    For text formatting, use your client's built-in Markdown.
- +    Use /cancel to cancel, /done when you're done. To remove a message, reply to it with /remove.
- +newtext_empty: "No custom texts."
- +newtext_invalid: >
- +    Error with text formatting. Check your text for Markdown issues and extra {}
- +newtext_deleted: "Removed!"
- +newtext_added: "*Custom texts added!*\n\n"
- +texts_list: "Customizable taffle texts for this chat (text {0} of {1}):"
- +delete: "Remove"
- +cancelled: "Cancelled"
- +success: "Success!"
+newtext_prompt: |
+     Enter custom raffle texts for your group (*all* of your messages will be saved).
+     Keywords: `{s}` —> raffle name, `{n}` —> winner.
+     For text formatting, use your client's built-in Markdown.
+     Use /cancel to cancel, /done when you're done. To remove a message, reply to it with /remove.
+ newtext_empty: "No custom texts."
+ newtext_invalid: >
+     Error with text formatting. Check your text for Markdown issues and extra {}
+ newtext_deleted: "Removed!"
+ newtext_added: "*Custom texts added!*\n\n"
+ texts_list: "Customizable raffle texts for this chat (text {0} of {1}):"
+ no_texts: "This chat has no custom texts."
+ delete: "Remove"
+ cancelled: "Cancelled"
+ success: "Success!"
 uptime: "The bot is up for {0}"
 error: "Error while processing the message."
+flood_lim: "Commands per minute limit reached. For the next minute, the bot will ignore any commands."
