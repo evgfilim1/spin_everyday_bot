@@ -12,11 +12,9 @@ import utils
 
 @utils.flood_limit
 @utils.not_pm
+@utils.admin_only
 def new_text(bot, update, chat_data):
     chat_id = update.message.chat_id
-    if not utils.is_admin_for_bot(chat_id, update.message.from_user.id, bot):
-        update.message.reply_text(utils.get_lang(chat_id, 'not_admin'))
-        return
     update.message.reply_text(utils.get_lang(chat_id, 'newtext_prompt'),
                               parse_mode=ParseMode.MARKDOWN)
     chat_data['p_user'] = update.message.from_user.id
@@ -98,7 +96,7 @@ def text_handler(bot, update):
     chat_id = msg.chat_id
 
     if _del:
-        if not utils.is_admin_for_bot(chat_id, query.from_user.id, bot):
+        if not utils.is_admin_for_bot(chat_id, query.from_user.id):
             query.answer(utils.get_lang(chat_id, 'not_admin'))
             return
         data.chat_texts[chat_id].pop(page - 1)

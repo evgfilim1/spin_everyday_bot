@@ -13,11 +13,12 @@ from functools import wraps
 import config
 import data
 
+_bot = Bot(config.BOT_TOKEN)
+
 
 class TelegramHandler(logging.Handler):
     def __init__(self):
         super(TelegramHandler, self).__init__()
-        self.bot = Bot(config.BOT_TOKEN)
 
     def emit(self, record):
         if config.LOG_CHANNEL is None:
@@ -25,7 +26,7 @@ class TelegramHandler(logging.Handler):
         if record.exc_info:
             record.exc_text = f'\n_Exception brief info:_\n`{record.exc_info[0].__name__}: {record.exc_info[1]}`'
         msg = self.format(record)
-        self.bot.send_message(chat_id=config.LOG_CHANNEL, text=msg, parse_mode=ParseMode.MARKDOWN)
+        _bot.send_message(chat_id=config.LOG_CHANNEL, text=msg, parse_mode=ParseMode.MARKDOWN)
 
 
 class _BotReply(BaseFilter):
@@ -118,12 +119,24 @@ def flood_limit(f):
     return wrapper
 
 
-def is_user_left(chat_user) -> bool:
+def admin_only(f):
+    @wraps(f)
+    def wrapper(bot, update, *args, **kwargs):
+        chat_id = update.effective_chat.id
+        if not is_admin_for_bot(chat_id, update.effective_user.id):
+            update.effective_message.reply_text(get_lang(chat_id, 'not_admin'))
+            return
+        return f(bot, update, *args, **kwargs)
+
+    return wrapper
+
+
+def is_user_left(chat_user):
     return chat_user.status == ChatMember.LEFT or \
            chat_user.status == ChatMember.KICKED
 
 
-def str_to_time(s: str) -> time:
+def str_to_time(s):
     t = s.split(':')
     hours = int(t[0])
     minutes = int(t[1])
@@ -131,7 +144,7 @@ def str_to_time(s: str) -> time:
     return time((hours + offset) % 24, minutes, tzinfo=None)
 
 
-def mention_markdown(user_id: int, name: str) -> str:
+def mention_markdown(user_id, name):
     return f'[{name}](tg://user?id={user_id})'
 
 
@@ -144,28 +157,28 @@ def pages(obj, page):
     return obj[begin:end], total_pages
 
 
-def is_admin_for_bot(chat_id: int, user_id: int, bot: Bot) -> bool:
-    return user_id == config.BOT_CREATOR or user_id in get_admins_ids(bot, chat_id) or \
+def is_admin_for_bot(chat_id, user_id):
+    return user_id == config.BOT_CREATOR or user_id in get_admins_ids(chat_id) or \
            user_id in data.can_change_name.get(chat_id, [])
 
 
-def get_admins_ids(bot: Bot, chat_id: int) -> list:
-    admins = bot.get_chat_administrators(chat_id=chat_id)
+def get_admins_ids(chat_id) -> list:
+    admins = _bot.get_chat_administrators(chat_id=chat_id)
     result = [admin.user.id for admin in admins]
     return result
 
 
-def update_config(chat_id: int, key, value):
+def update_config(chat_id, key, value):
     if data.chat_config.get(chat_id) is None:
         data.chat_config[chat_id] = {}
     data.chat_config[chat_id].update({key: value})
 
 
-def get_config_key(chat_id: int, key, default=None):
+def get_config_key(chat_id, key, default=None):
     return data.chat_config.get(chat_id, {}).get(key, default)
 
 
-def get_lang(chat_id: int, key: str):
+def get_lang(chat_id, key):
     lang = get_config_key(chat_id, 'lang', default=config.FALLBACK_LANG)
     if data.languages.get(lang) is None or data.languages.get(lang).get(key) is None:
         lang = config.FALLBACK_LANG

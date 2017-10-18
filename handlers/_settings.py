@@ -67,7 +67,7 @@ def settings(bot, update, callback=True):
                                            reply_markup=InlineKeyboardMarkup(keyboard))
     else:
         user_id = update.effective_user.id
-        if (not pm and utils.is_admin_for_bot(chat_id, user_id, bot)) or pm:
+        if (not pm and utils.is_admin_for_bot(chat_id, user_id)) or pm:
             try:
                 bot.send_message(user_id, utils.get_lang(chat_id, 'settings').format(chat_title),
                                  reply_markup=InlineKeyboardMarkup(keyboard))

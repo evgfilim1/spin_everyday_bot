@@ -38,7 +38,7 @@ def do_the_spin(bot, update):
                          parse_mode=ParseMode.MARKDOWN, disable_notification=True)
     else:
         if utils.get_config_key(chat_id, 'restrict', default=False) and \
-                not utils.is_admin_for_bot(chat_id, update.message.from_user.id, bot):
+                not utils.is_admin_for_bot(chat_id, update.message.from_user.id):
             update.message.reply_text(utils.get_lang(chat_id, 'spin_restricted'))
             return
         user = choose_random_user(chat_id, bot)
@@ -73,7 +73,7 @@ def change_spin_name(bot, update, args: list):
         msg.reply_text(text=utils.get_lang(msg.chat_id, 'spin_name_current').format(spin),
                        parse_mode=ParseMode.MARKDOWN)
         return
-    if utils.is_admin_for_bot(msg.chat_id, msg.from_user.id, bot):
+    if utils.is_admin_for_bot(msg.chat_id, msg.from_user.id):
         if args[-1].lower() == utils.get_lang(msg.chat_id, 'spin_suffix') and len(args) > 1:
             args.pop(-1)
         spin = ' '.join(args)
@@ -90,7 +90,7 @@ def auto_spin_config(bot, update, args, job_queue):
     msg = update.effective_message
     if len(args) == 0:
         return
-    is_moder = utils.is_admin_for_bot(msg.chat_id, msg.from_user.id, bot)
+    is_moder = utils.is_admin_for_bot(msg.chat_id, msg.from_user.id)
     cmd = args.pop(0)
     if cmd == 'set' and is_moder:
         try:

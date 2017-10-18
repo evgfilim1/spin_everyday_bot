@@ -14,7 +14,7 @@ import config
 def admin_ctrl(bot, update, args):
     msg = update.effective_message
     reply = msg.reply_to_message
-    admins = utils.get_admins_ids(bot, msg.chat_id)
+    admins = utils.get_admins_ids(msg.chat_id)
     admins.append(config.BOT_CREATOR)
     is_admin = msg.from_user.id in admins
     if len(args) == 0:
@@ -23,7 +23,7 @@ def admin_ctrl(bot, update, args):
     if msg.chat_id not in data.can_change_name:
         data.can_change_name[msg.chat_id] = []
     if cmd == 'add' and reply and is_admin:
-        if utils.is_admin_for_bot(msg.chat_id, reply.from_user.id, bot):
+        if utils.is_admin_for_bot(msg.chat_id, reply.from_user.id):
             msg.reply_text(text=utils.get_lang(msg.chat_id, 'admin_still_allow'),
                            parse_mode=ParseMode.MARKDOWN)
         else:
@@ -31,7 +31,7 @@ def admin_ctrl(bot, update, args):
             msg.reply_text(text=utils.get_lang(msg.chat_id, 'admin_allow'),
                            parse_mode=ParseMode.MARKDOWN)
     elif cmd == 'del' and reply and is_admin:
-        if not utils.is_admin_for_bot(msg.chat_id, reply.from_user.id, bot):
+        if not utils.is_admin_for_bot(msg.chat_id, reply.from_user.id):
             msg.reply_text(text=utils.get_lang(msg.chat_id, 'admin_still_deny'),
                            parse_mode=ParseMode.MARKDOWN)
         else:
