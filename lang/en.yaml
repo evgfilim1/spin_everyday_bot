@@ -127,7 +127,7 @@ help_texts:
                         text: Start adding new texts
                         admin: yes
             chattexts:
-                summary: This group's custom texts lixt.
+                summary: This group's custom texts list.
                 usage:
                     '':
                         text: Show a paginal list of this group's custom texts         
@@ -205,20 +205,20 @@ not_admin: "Access denied"
 feedback_prompt: "Enter a message which will be sent to the bot admin\nThe bot accepts text, images and files\nEnter /cancel to cancel"
 feedback_sent: "Your message is sent"
 newtext_prompt: |
-     Enter custom raffle texts for your group (*all* of your messages will be saved).
-     Keywords: `{s}` —> raffle name, `{n}` —> winner.
-     For text formatting, use your client's built-in Markdown.
-     Use /cancel to cancel, /done when you're done. To remove a message, reply to it with /remove.
- newtext_empty: "No custom texts."
- newtext_invalid: >
-     Error with text formatting. Check your text for Markdown issues and extra {}
- newtext_deleted: "Removed!"
- newtext_added: "*Custom texts added!*\n\n"
- texts_list: "Customizable raffle texts for this chat (text {0} of {1}):"
- no_texts: "This chat has no custom texts."
- delete: "Remove"
- cancelled: "Cancelled"
- success: "Success!"
+    Enter custom raffle texts for your group (*all* of your messages will be saved).
+    Keywords: `{s}` —> raffle name, `{n}` —> winner.
+    For text formatting, use your client's built-in Markdown.
+    Use /cancel to cancel, /done when you're done. To remove a message, reply to it with /remove.
+newtext_empty: "No custom texts."
+newtext_invalid: >
+    Error with text formatting. Check your text for Markdown issues and extra {}
+newtext_deleted: "Removed!"
+newtext_added: "*Custom texts added!*\n\n"
+texts_list: "Customizable raffle texts for this chat (text {0} of {1}):"
+no_texts: "This chat has no custom texts."
+delete: "Remove"
+cancelled: "Cancelled"
+success: "Success!"
 uptime: "The bot is up for {0}"
 error: "Error while processing the message."
 flood_lim: "Commands per minute limit reached. For the next minute, the bot will ignore any commands."
