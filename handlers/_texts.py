@@ -77,7 +77,7 @@ def list_text(bot, update):
         update.message.reply_text(utils.get_lang(chat_id, 'no_texts'))
         return
     for line in data.chat_texts.get(chat_id, [[]])[0]:
-        text += line.format(s=spin_name, n=update.message.from_user.name) + '\n'
+        text += line.format(s=spin_name, n=escape_markdown(update.message.from_user.name)) + '\n'
     text = text.format(1, count)
     keyboard = [[InlineKeyboardButton(utils.get_lang(chat_id, 'delete'), callback_data='texts:1:del')]]
     if count > 1:
