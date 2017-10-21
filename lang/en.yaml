@@ -63,7 +63,7 @@ spin_restricted: "Only admins can start the raffle in this group"
 locked_buttons: "You can't use buttons during the raffle"
 help_short: "*Hi!* I'm a bot for daily raffles in chats.\n
 *Usage:*\n
-/settings - _Settigs_\n
+/settings - _Settings_\n
 /setname - _View or change the raffle name_\n
 /count - _Check the amount of raffle participiants_\n
 /spin - _Start the raffle_\n
