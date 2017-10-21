@@ -1,5 +1,7 @@
 # SpinEverydayBot
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ab340c80e3e64d75b0fd32b82d790f8f)](https://www.codacy.com/app/evgfilim1/spin_everyday_bot)
+
 ## Setting up
 
 * Check that you have Python 3.6+ and pip installed:
