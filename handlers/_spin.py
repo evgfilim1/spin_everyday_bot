@@ -129,7 +129,7 @@ def choose_random_user(chat_id, bot) -> int:
             member = bot.get_chat_member(chat_id=chat_id, user_id=user_id)
             if utils.is_user_left(member):
                 raise TelegramError('User left the group')
-        except TelegramError as e:
+        except TelegramError:
             data.chat_users[chat_id].pop(data.chat_users[chat_id].index(user_id))
             return choose_random_user(chat_id, bot)
         user = member.user

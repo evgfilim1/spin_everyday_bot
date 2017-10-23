@@ -13,6 +13,21 @@ def settings_command(*args, **kwargs):
     settings(callback=False, *args, **kwargs)
 
 
+def generate_two_state_button(chat_id, callback_id, config_key, default_key):
+    if utils.get_config_key(chat_id, config_key, default=default_key):
+        _text = utils.get_lang(chat_id, 'settings_on')
+        _data = f'settings:{chat_id}:{callback_id}:0'
+    else:
+        _text = utils.get_lang(chat_id, 'settings_off')
+        _data = f'settings:{chat_id}:{callback_id}:1'
+    return InlineKeyboardButton(_text, callback_data=_data)
+
+
+def generate_help_button(chat_id, callback_id, lang_id):
+    return InlineKeyboardButton(utils.get_lang(chat_id, f'settings_{lang_id}'),
+                                callback_data=f'settings:{chat_id}:{callback_id}:help+{lang_id}')
+
+
 def settings(bot, update, callback=True):
     if callback:
         chat_id = int(update.callback_query.data.split(':')[1])
@@ -29,38 +44,13 @@ def settings(bot, update, callback=True):
 
     keyboard = [[InlineKeyboardButton(utils.get_lang(chat_id, 'settings_lang'),
                                       callback_data=f'settings:{chat_id}:lang:')]]
-    button_on = utils.get_lang(chat_id, 'settings_on')
-    button_off = utils.get_lang(chat_id, 'settings_off')
-    callback_off = f'settings:{chat_id}:{{}}:0'
-    callback_on = f'settings:{chat_id}:{{}}:1'
     if not pm:
-        if utils.get_config_key(chat_id, 'fast', default=False):
-            fast_text = button_on
-            fast_callback = callback_off.format('fast')
-        else:
-            fast_text = button_off
-            fast_callback = callback_on.format('fast')
-        if utils.get_config_key(chat_id, 'restrict', default=False):
-            restrict_text = button_on
-            restrict_callback = callback_off.format('restrict')
-        else:
-            restrict_text = button_off
-            restrict_callback = callback_on.format('restrict')
-        if utils.get_config_key(chat_id, 'show_list', default=False):
-            list_text = button_on
-            list_callback = callback_off.format('show_list')
-        else:
-            list_text = button_off
-            list_callback = callback_on.format('show_list')
-        keyboard.extend([[InlineKeyboardButton(utils.get_lang(chat_id, 'settings_fast_spin'),
-                                               callback_data=f'settings:{chat_id}:fast:help+fast_spin'),
-                          InlineKeyboardButton(fast_text, callback_data=fast_callback)],
-                         [InlineKeyboardButton(utils.get_lang(chat_id, 'settings_who_spin'),
-                                               callback_data=f'settings:{chat_id}:restrict:help+who_spin'),
-                          InlineKeyboardButton(restrict_text, callback_data=restrict_callback)],
-                         [InlineKeyboardButton(utils.get_lang(chat_id, 'settings_show_list'),
-                                               callback_data=f'settings:{chat_id}:show_list:help+show_list'),
-                          InlineKeyboardButton(list_text, callback_data=list_callback)]])
+        keyboard.extend([[generate_help_button(chat_id, 'fast', 'fast_spin'),
+                          generate_two_state_button(chat_id, 'fast', 'fast', default_key=False)],
+                         [generate_help_button(chat_id, 'restrict', 'who_spin'),
+                          generate_two_state_button(chat_id, 'restrict', 'restrict', default_key=False)],
+                         [generate_help_button(chat_id, 'show_list', 'show_list'),
+                          generate_two_state_button(chat_id, 'show_list', 'show_list', default_key=False)]])
 
     if callback:
         update.effective_message.edit_text(utils.get_lang(chat_id, 'settings').format(chat_title),
