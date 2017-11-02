@@ -2,3 +2,5 @@
 config.py
 !clean_dict.pkl
 /bot.log
+/cert.pem
+/private.key

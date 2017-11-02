@@ -13,6 +13,11 @@ BOT_TOKEN = "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi"
 # Set `None` if you don't want to use TeleSocket Service
 TELESOCKET_TOKEN = "1234567890abcdef1234567890abcdef1234567890abcdef"
 
+# Your Webhook config
+USE_WEBHOOKS = False
+WEBHOOK_CERT = 'cert.pem'
+WEBHOOK_KEY = 'private.key'
+
 # Your Telegram User ID
 BOT_CREATOR = 123456987
 
