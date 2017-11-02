@@ -16,6 +16,14 @@ BOT_TOKEN = '123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi'
 # Set `None` if you don't want to use TeleSocket Service
 TELESOCKET_TOKEN = '1234567890abcdef1234567890abcdef1234567890abcdef'
 
+# Webhook config. If you want to use webhooks, set this to `True`
+USE_WEBHOOKS = False
+
+# Relative path to your key and cert file respectively. This can be missing while `USE_WEBHOOKS` is False
+# More info about webhooks: 'https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks'
+WEBHOOK_CERT = 'data/cert.pem'
+WEBHOOK_KEY = 'data/private.key'
+
 # Your Telegram User ID
 BOT_CREATOR = 123456987
 

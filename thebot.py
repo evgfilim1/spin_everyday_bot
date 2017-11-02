@@ -94,6 +94,9 @@ if config.TELESOCKET_TOKEN:
     updater.job_queue.start()
     updater._init_thread(updater.dispatcher.start, 'dispatcher')
     updater.running = True
+elif config.USE_WEBHOOKS:
+    updater.start_webhook(listen='0.0.0.0', port=8443, cert=config.WEBHOOK_CERT, key=config.WEBHOOK_KEY,
+                          clean=True, allowed_updates=ALLOWED_UPDATES)
 else:
     updater.start_polling(clean=True, allowed_updates=ALLOWED_UPDATES)
 
