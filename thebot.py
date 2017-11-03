@@ -83,7 +83,11 @@ dp.add_error_handler(handlers.handle_error)
 utils.init(job_queue=updater.job_queue, callback=handlers.auto_spin)
 
 if config.TELESOCKET_TOKEN:
-    from TeleSocketClient import TeleSocket
+    try:
+        from TeleSocketClient import TeleSocket
+    except ImportError:
+        raise ImportError('"TeleSocketClient" is not installed, can\'t use TeleSocket Service'
+                          ' (check config_example.py for more info)')
     updater.bot.set_webhook()
     sock = TeleSocket()
     sock.login(config.TELESOCKET_TOKEN)
@@ -95,7 +99,15 @@ if config.TELESOCKET_TOKEN:
     updater._init_thread(updater.dispatcher.start, 'dispatcher')
     updater.running = True
 elif config.USE_WEBHOOKS:
-    updater.start_webhook(listen='0.0.0.0', port=8443, cert=config.WEBHOOK_CERT, key=config.WEBHOOK_KEY,
+    if config.WEBHOOK_URL is None or config.WEBHOOK_URL == '0.0.0.0':
+        try:
+            from requests import get
+        except ImportError:
+            raise ImportError('"requests" is not installed. can\'t use URL autodetection'
+                              ' (check config_example.py for more info)')
+        config.WEBHOOK_URL = get('http://api.ipify.org').text
+    updater.start_webhook(listen=config.WEBHOOK_URL, port=8443, url_path=config.BOT_TOKEN[:-5],
+                          cert=config.WEBHOOK_CERT, key=config.WEBHOOK_KEY,
                           clean=True, allowed_updates=ALLOWED_UPDATES)
 else:
     updater.start_polling(clean=True, allowed_updates=ALLOWED_UPDATES)

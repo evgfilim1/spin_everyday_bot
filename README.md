@@ -29,11 +29,11 @@ $ cp config_example.py config.py
 $ pip3 install -U -r requirements.txt
 ```
 
-**Note**: If you want to use [TeleSocket Service](https://pypi.python.org/pypi/TeleSocketClient), 
-append `TeleSocketClient` to the command:
+**Note**: You can install optional dependencies, which are listed in [example config file](config_example.py). 
+To do this, append `-r requirements-optional.txt` to the command:
 ```bash
-$ pip3 install -U -r requirements.txt TeleSocketClient
-```
+$ pip3 install -U -r requirements.txt -r requirements-optional.txt
+``` 
 **For Windows users:** use `pip` instead of `pip3` 
 
 
