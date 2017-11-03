@@ -106,8 +106,9 @@ elif config.USE_WEBHOOKS:
             raise ImportError('"requests" is not installed. can\'t use URL autodetection'
                               ' (check config_example.py for more info)')
         config.WEBHOOK_URL = get('http://api.ipify.org').text
-    updater.start_webhook(listen=config.WEBHOOK_URL, port=8443, url_path=config.BOT_TOKEN[:-5],
+    updater.start_webhook(listen='0.0.0.0', port=8443, url_path=config.BOT_TOKEN[:-5],
                           cert=config.WEBHOOK_CERT, key=config.WEBHOOK_KEY,
+                          webhook_url=f'https://{config.WEBHOOK_URL}:8443/{config.BOT_TOKEN[:-5]}',
                           clean=True, allowed_updates=ALLOWED_UPDATES)
 else:
     updater.start_polling(clean=True, allowed_updates=ALLOWED_UPDATES)
