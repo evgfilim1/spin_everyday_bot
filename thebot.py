@@ -464,7 +464,7 @@ if config.TELESOCKET_TOKEN:
     updater.running = True
 elif config.USE_WEBHOOKS:
     updater.start_webhook(listen='0.0.0.0', port=8443, cert=config.WEBHOOK_CERT, key=config.WEBHOOK_KEY,
-                          clean=True, allowed_updates=ALLOWED_UPDATES)
+                          clean=True, allowed_updates=ALLOWED_UPDATES, webhook_url=f'https://{config.WEBHOOK_URL}:8443')
 else:
     updater.start_polling(clean=True, allowed_updates=ALLOWED_UPDATES)
 

@@ -15,6 +15,7 @@ TELESOCKET_TOKEN = "1234567890abcdef1234567890abcdef1234567890abcdef"
 
 # Your Webhook config
 USE_WEBHOOKS = False
+WEBHOOK_URL = None
 WEBHOOK_CERT = 'cert.pem'
 WEBHOOK_KEY = 'private.key'
 
