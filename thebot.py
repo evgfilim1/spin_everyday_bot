@@ -8,7 +8,10 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler,
 from datetime import datetime
 from time import gmtime
 
-import config
+try:
+    import config
+except ImportError:
+    raise ImportError('Seems you haven\'t configured this bot. Check README.md for more info.')
 import data
 import utils
 import handlers
