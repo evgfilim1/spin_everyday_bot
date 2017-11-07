@@ -3,6 +3,7 @@
 # See full NOTICE at http://github.com/evgfilim1/spin_everyday_bot
 
 from logging import DEBUG
+from telegram.error import TimedOut
 
 import data
 import utils
@@ -13,6 +14,8 @@ log = utils.set_up_logger(__name__, DEBUG)
 
 
 def handle_error(bot, update, error):
+    if (isinstance(error, TimedOut) or update is None) and config.LOG_CHANNEL is not None:
+        return
     log.error(f'Update {update} caused error: {error}')
     if config.SHOW_ERRORS:
         update.effective_message.reply_text(utils.get_lang(update.effective_chat.id, 'error'))
