@@ -10,7 +10,7 @@ from ._spin import locks
 
 
 def top_win(chat_id):
-    return sorted(data.results_total.get(chat_id, {}).items(), key=lambda x: x[1], reverse=True)
+    return sorted(data.results_total[chat_id].items(), key=lambda x: x[1], reverse=True)
 
 
 def make_top(chat_id, page):
@@ -64,17 +64,15 @@ def top(bot, update, args):
     reply_keyboard = [[]]
     if chat_id in locks:
         return
-    if chat_id not in data.results_total:
-        data.results_total[chat_id] = {}
     if len(args) == 1 and args[0] == 'me':
         user = update.message.from_user
         username = user.name
-        stat = data.results_total[chat_id].get(user.id, 0)
+        stat = data.results_total[chat_id][user.id]
         text = utils.get_lang(chat_id, 'stats_me').format(username, stat)
     elif update.message.reply_to_message:
         user = update.message.reply_to_message.from_user
         username = user.name
-        stat = data.results_total[chat_id].get(user.id, 0)
+        stat = data.results_total[chat_id][user.id]
         text = utils.get_lang(chat_id, 'stats_user').format(username, stat)
     else:
         text, pages = make_top(chat_id, page=1)

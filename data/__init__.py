@@ -6,22 +6,23 @@ import pickle
 from os import listdir
 from os.path import exists
 from yaml import load
-from collections import Counter
+from collections import Counter, defaultdict
+from functools import partial
 
-chat_users = {}
-usernames = {}
-spin_name = {}
-can_change_name = {}
-results_today = {}
-results_total = {}
-auto_spins = {}
-auto_spin_jobs = {}
-chat_config = {}
-languages = {}
-wotd_registered = []
-wotd = 0
-chat_texts = {}
-flood = Counter()
+chat_users = defaultdict(set)           # {chat_id[int]: {user_id0[int], user_id1[int]}}
+usernames = {}                          # {user_id[int]: username[str]}
+spin_name = {}                          # {chat_id[int]: name[str]}
+can_change_name = defaultdict(set)      # {chat_id[int]: {user_id0[int], user_id1[int]}}
+results_today = {}                      # {chat_id[int]: user_id[int]}
+results_total = defaultdict(Counter)    # {chat_id[int]: Counter({user_id[int]: count[int]})}
+auto_spins = {}                         # {chat_id[int]: time[str]}
+auto_spin_jobs = {}                     # {chat_id[int]: job[telegram.ext.JobQueue.Job]}
+chat_config = {}                        # {chat_id[int]: {key[str]: value[bool|str]}
+languages = {}                          # {lang[str]: data[dict]}
+wotd_registered = set()                 # {user_id0[int], user_id1[int]}
+wotd = 0                                # wotd[int]
+chat_texts = {}                         # {chat_id: [[line1[str], line2[str]]}
+flood = Counter()                       # Counter({chat_id[int]: messages[int]})
 
 
 def _load(filename: str, default: type = dict):
@@ -49,15 +50,17 @@ def _load_lang():
 def _load_all():
     global chat_users, usernames, spin_name, can_change_name, results_today, results_total, auto_spins
     global chat_config, wotd_registered, wotd, chat_texts
-    chat_users = _load('users.pkl')
+    p_set = partial(defaultdict, set)
+    p_counter = partial(defaultdict, Counter)
+    chat_users = _load('users.pkl', default=p_set)
     usernames = _load('unames.pkl')
     spin_name = _load('spin.pkl')
-    can_change_name = _load('changers.pkl')
+    can_change_name = _load('changers.pkl', default=p_set)
     results_today = _load('results.pkl')
-    results_total = _load('total.pkl')
+    results_total = _load('total.pkl', default=p_counter)
     auto_spins = _load('auto.pkl')
     chat_config = _load('config.pkl')
-    wotd_registered = _load('wotdreg.pkl', default=list)
+    wotd_registered = _load('wotdreg.pkl', default=set)
     wotd = _load('wotdwin.pkl', default=int)
     chat_texts = _load('texts.pkl')
     _load_lang()
@@ -79,20 +82,17 @@ def save_all():
 
 def clear_chat_data(chat_id):
     chat_users.pop(chat_id)
-    try:
-        spin_name.pop(chat_id)
-    except KeyError:
-        pass
-
-    try:
+    if chat_id in can_change_name:
         can_change_name.pop(chat_id)
-    except KeyError:
-        pass
-
-    try:
-        results_today.pop(chat_id)
-    except KeyError:
-        pass
+    if chat_id in results_total:
+        results_total.pop(chat_id)
+    if chat_id in auto_spins:
+        auto_spins.pop(chat_id)
+        auto_spin_jobs.pop(chat_id).schedule_removal()
+    if chat_id in chat_config:
+        chat_config.pop(chat_id)
+    if chat_id in chat_texts:
+        chat_texts.pop(chat_id)
 
 
 def migrate(from_chat, to_chat):

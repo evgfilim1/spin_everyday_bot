@@ -5,7 +5,7 @@
 from ._admgroup import admin_ctrl
 from ._etc import ping, spin_count, uptime, bot_started
 from ._feedback import ask_feedback, send_feedback
-from ._help import about, start_help_handler, help_button_handler
+from ._help import about, start_help_handler, help_button_handler, bot_version
 from ._jobs import daily_job, hourly_job
 from ._service import svc_handler, update_cache, handle_error
 from ._settings import settings, settings_command, lang_handler, two_state_handler, two_state_helper

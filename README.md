@@ -1,6 +1,7 @@
 # SpinEverydayBot
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ab340c80e3e64d75b0fd32b82d790f8f)](https://www.codacy.com/app/evgfilim1/spin_everyday_bot)
+[![Requirements Status](https://requires.io/github/evgfilim1/spin_everyday_bot/requirements.svg?branch=indev)](https://requires.io/github/evgfilim1/spin_everyday_bot/requirements/?branch=indev)
 
 ## Setting up
 
@@ -44,4 +45,18 @@ It is very easy:
 $ python3 thebot.py
 ```
 
-**For Windows users:** use `python` or `py` instead of `python3.6`
+Also it has command-line arguments:
+```bash
+$ python3 thebot.py --help
+usage: thebot.py [-h] [-v] [-m | -M]
+
+SpinEverydayBot -- Telegram bot for daily raffles
+
+optional arguments:
+  -h, --help        show this help message and exit
+  -v, --version     show program's version number and exit
+  -m, --migrate     force migrate data
+  -M, --no-migrate  don't migrate data
+```
+
+**For Windows users:** use `python` or `py` instead of `python3`

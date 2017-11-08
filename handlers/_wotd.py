@@ -23,7 +23,7 @@ def wotd(bot, update, args):
         cmd = args.pop(0)
         if cmd == 'register':
             if user_id not in data.wotd_registered:
-                data.wotd_registered.append(user_id)
+                data.wotd_registered.add(user_id)
                 update.effective_message.reply_text(utils.get_lang(chat_id, 'wotd_registered'))
             else:
                 update.effective_message.reply_text(utils.get_lang(chat_id, 'wotd_already_reg'))

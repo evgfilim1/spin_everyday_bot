@@ -124,17 +124,17 @@ def auto_spin_config(bot, update, args, job_queue):
 
 def choose_random_user(chat_id, bot) -> int:
     if chat_id:
-        user_id = choice(data.chat_users[chat_id])
+        user_id = choice(tuple(data.chat_users[chat_id]))
         try:
             member = bot.get_chat_member(chat_id=chat_id, user_id=user_id)
             if utils.is_user_left(member):
                 raise TelegramError('User left the group')
         except TelegramError:
-            data.chat_users[chat_id].pop(data.chat_users[chat_id].index(user_id))
+            data.chat_users[chat_id].discard(user_id)
             return choose_random_user(chat_id, bot)
         user = member.user
     else:
-        user_id = choice(data.wotd_registered)
+        user_id = choice(tuple(data.wotd_registered))
         user = bot.get_chat(user_id)
     if user.first_name == '':
         data.usernames.update({user_id: f'DELETED/id{user_id}'})
@@ -147,9 +147,7 @@ def choose_random_user(chat_id, bot) -> int:
         name = user.first_name
     if chat_id:
         data.results_today.update({chat_id: user.id})
-        if chat_id not in data.results_total:
-            data.results_total.update({chat_id: {}})
-        data.results_total[chat_id].update({user.id: data.results_total[chat_id].get(user.id, 0) + 1})
+        data.results_total[chat_id][user.id] += 1
     else:
         data.wotd = user.id
     data.usernames.update({user.id: name})

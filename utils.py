@@ -9,11 +9,13 @@ from os.path import exists
 from telegram import (ChatMember, ParseMode, Update, Bot)
 from telegram.ext import BaseFilter
 from functools import wraps
+from collections import Counter, defaultdict
 
 import config
 import data
 
 _bot = Bot(config.BOT_TOKEN)
+migrated = False
 
 
 class TelegramHandler(logging.Handler):
@@ -42,36 +44,66 @@ def set_up_logger(name, level):
     return _log
 
 
-def _migrate_to_v2():
+def _needs_migrating():
+    return not migrated and (exists('data/unames.pkl') or
+                             (not exists('data/users.pkl') and not exists('users.pkl')))
+
+
+def migrate_to_v2():
+    global migrated
     from shutil import copy, move
-    if exists('data/unames.pkl') or (not exists('data/users.pkl') and not exists('users.pkl')):
-        return  # Already migrated or nothing to migrate
+
     if not exists('data/users.pkl'):
         print('==> Moving your *.pkl files to data/ directory...')
         move('*.pkl', 'data/')
 
     print('==> Migrating bot data...')
+    print(' -> (1 of 4) Extracting usernames...')
     with open(f'data/users.pkl', 'rb') as ff:
-        chats_users = pickle.load(ff)
-    unames = {}
-
-    print(' -> Extracting usernames...')
-    for chat, users in chats_users.items():
+        chat_users = pickle.load(ff)
+    usernames = {}
+    for chat, users in chat_users.items():
         for user, name in users.items():
-            unames.update({user: name})
-        chats_users[chat] = list(users.keys())
+            usernames.update({user: name})
+        chat_users[chat] = set(users.keys())
 
-    print(' -> Copying data/users.pkl to data/users.bak.pkl...')
-    if exists('data/users.bak.pkl'):
-        raise FileExistsError("Can't backup old data")
-    copy('data/users.pkl', 'data/users.bak.pkl')
+    print(' -> (2 of 4) Changing some data types...')
+    chat_users = defaultdict(set, chat_users)
 
-    print(' -> Saving generated data...')
-    with open(f'data/users.pkl', 'wb') as ff:
-        pickle.dump(chats_users, ff, pickle.HIGHEST_PROTOCOL)
-    with open(f'data/unames.pkl', 'wb') as ff:
-        pickle.dump(unames, ff, pickle.HIGHEST_PROTOCOL)
+    with open('data/changers.pkl', 'rb') as ff:
+        bot_admins = pickle.load(ff)
+    for chat in bot_admins:
+        bot_admins[chat] = set(bot_admins[chat])
+    bot_admins = defaultdict(set, bot_admins)
+
+    with open('data/total.pkl', 'rb') as ff:
+        results = pickle.load(ff)
+    for chat in results:
+        results[chat] = Counter(results[chat])
+    results = defaultdict(Counter, results)
+
+    with open('data/wotdreg.pkl', 'rb') as ff:
+        wotd = set(pickle.load(ff))
+
+    print(' -> (3 of 4) Backing up data...')
+    for file in ('users', 'changers', 'total', 'wotdreg'):
+        if exists(f'data/{file}.bak.pkl'):
+            raise FileExistsError(f"Can't backup old data: data/{file}.bak.pkl exists")
+        copy(f'data/{file}.pkl', f'data/{file}.bak.pkl')
+
+    print(' -> (4 of 4) Saving generated data...')
+    with open('data/users.pkl', 'wb') as ff:
+        pickle.dump(chat_users, ff, pickle.HIGHEST_PROTOCOL)
+    with open('data/unames.pkl', 'wb') as ff:
+        pickle.dump(usernames, ff, pickle.HIGHEST_PROTOCOL)
+    with open('data/changers.pkl', 'wb') as ff:
+        pickle.dump(bot_admins, ff, pickle.HIGHEST_PROTOCOL)
+    with open('data/total.pkl', 'wb') as ff:
+        pickle.dump(results, ff, pickle.HIGHEST_PROTOCOL)
+    with open('data/wotdreg.pkl', 'wb') as ff:
+        pickle.dump(wotd, ff, pickle.HIGHEST_PROTOCOL)
     print('==> Migrating completed!')
+    migrated = True
 
 
 def read_update(updater, update):
@@ -80,7 +112,8 @@ def read_update(updater, update):
 
 
 def init(job_queue, callback):
-    _migrate_to_v2()
+    if _needs_migrating():
+        migrate_to_v2()
     for chat in data.auto_spins:
         job = job_queue.run_daily(callback, str_to_time(data.auto_spins[chat]), context=chat)
         data.auto_spin_jobs.update({chat: job})
@@ -159,7 +192,7 @@ def pages(obj, page):
 
 def is_admin_for_bot(chat_id, user_id):
     return user_id == config.BOT_CREATOR or user_id in get_admins_ids(chat_id) or \
-           user_id in data.can_change_name.get(chat_id, [])
+           user_id in data.can_change_name[chat_id]
 
 
 def get_admins_ids(chat_id) -> list:

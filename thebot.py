@@ -3,6 +3,7 @@
 # See full NOTICE at http://github.com/evgfilim1/spin_everyday_bot
 
 import logging
+from argparse import ArgumentParser
 from telegram.ext import (Updater, CommandHandler, MessageHandler,
                           CallbackQueryHandler, Filters, ConversationHandler)
 from datetime import datetime
@@ -16,8 +17,19 @@ import data
 import utils
 import handlers
 
-ALLOWED_UPDATES = ['message', 'edited_message', 'callback_query']
+parser = ArgumentParser(description='SpinEverydayBot -- Telegram bot for daily raffles')
+parser.add_argument('-v', '--version', action='version', version=f'SpinEverydayBot {handlers.bot_version()}')
+migrate = parser.add_mutually_exclusive_group()
+migrate.add_argument('-m', '--migrate', action='store_true', help='force migrate data')
+migrate.add_argument('-M', '--no-migrate', action='store_true', help='don\'t migrate data')
+args = parser.parse_args()
 
+if args.migrate:
+    utils.migrate_to_v2()
+elif args.no_migrate:
+    utils.migrated = True
+
+ALLOWED_UPDATES = ['message', 'edited_message', 'callback_query']
 
 # Set all logging time in UTC
 logging.Formatter.converter = gmtime
