@@ -17,12 +17,11 @@ BOT_TOKEN = '123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi'
 #  to use TeleSocket Service)
 TELESOCKET_TOKEN = '1234567890abcdef1234567890abcdef1234567890abcdef'
 
-# Webhook config. If you want to use webhooks, set this to `True`
-USE_WEBHOOKS = False
+# URL or IP of your server. If this is set to `None`, webhooks are disabled
+WEBHOOK_URL = None
 
-# URL or IP of your server. Leave '0.0.0.0' or `None` to autodetect it. (you need to install 'requests'
-#  package to use autodetection)
-WEBHOOK_URL = '0.0.0.0'
+# Webhook port. Only 80, 88, 443 and 8443 are supported by Telegram
+WEBHOOK_PORT = 8443
 
 # Relative path to your key and cert file respectively. This can be missing while `USE_WEBHOOKS` is False
 # More info about webhooks: 'https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks'
