@@ -182,6 +182,8 @@ def mention_markdown(user_id, name):
 
 
 def pages(obj, page):
+    if isinstance(obj, set):
+        obj = list(obj)
     total_pages = len(obj) // config.PAGE_SIZE
     begin = (page - 1) * config.PAGE_SIZE
     end = begin + config.PAGE_SIZE
