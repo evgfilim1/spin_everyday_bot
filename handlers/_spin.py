@@ -20,11 +20,12 @@ def auto_spin(bot, job):
 
 
 @run_async
+@utils.localize
 @utils.flood_limit
 @utils.not_pm
-def do_the_spin(bot, update):
+def do_the_spin(bot, update, tr):
     chat_id = update.message.chat_id
-    spin_name = escape_markdown(data.spin_name.get(chat_id, utils.get_lang(chat_id, 'default_spin_name')))
+    spin_name = escape_markdown(data.spin_name.get(chat_id, tr.spin.default_name))
     winner = data.results_today.get(chat_id)
     if chat_id in locks:
         return
@@ -34,12 +35,12 @@ def do_the_spin(bot, update):
             name = utils.mention_markdown(winner, name)
         else:
             name = escape_markdown(name)
-        bot.send_message(chat_id=chat_id, text=utils.get_lang(chat_id, 'already_spin').format(s=spin_name, n=name),
+        bot.send_message(chat_id=chat_id, text=tr.spin.result.format(s=spin_name, n=name),
                          parse_mode=ParseMode.MARKDOWN, disable_notification=True)
     else:
         if utils.get_config_key(chat_id, 'restrict', default=False) and \
                 not utils.is_admin_for_bot(chat_id, update.message.from_user.id):
-            update.message.reply_text(utils.get_lang(chat_id, 'spin_restricted'))
+            update.message.reply_text(tr.spin.restricted)
             return
         user = choose_random_user(chat_id, bot)
         winner = data.usernames.get(user)
@@ -48,7 +49,7 @@ def do_the_spin(bot, update):
         else:
             winner = escape_markdown(winner)
         from time import sleep
-        spin_texts = utils.get_lang(chat_id, 'default_spin_texts').copy()
+        spin_texts = tr.default_spin_texts.copy()
         if chat_id in data.chat_texts:
             spin_texts += data.chat_texts[chat_id]
         curr_text = choice(spin_texts)
@@ -64,29 +65,31 @@ def do_the_spin(bot, update):
         locks.pop(locks.index(chat_id))
 
 
+@utils.localize
 @utils.flood_limit
 @utils.not_pm
-def change_spin_name(bot, update, args: list):
+def change_spin_name(bot, update, args, tr):
     msg = update.effective_message
     if len(args) == 0:
-        spin = data.spin_name.get(msg.chat_id, utils.get_lang(msg.chat_id, 'default_spin_name'))
-        msg.reply_text(text=utils.get_lang(msg.chat_id, 'spin_name_current').format(spin),
+        spin = data.spin_name.get(msg.chat_id, tr.spin.default_name)
+        msg.reply_text(text=tr.spin.current_name.format(spin),
                        parse_mode=ParseMode.MARKDOWN)
         return
     if utils.is_admin_for_bot(msg.chat_id, msg.from_user.id):
-        if args[-1].lower() == utils.get_lang(msg.chat_id, 'spin_suffix') and len(args) > 1:
+        if args[-1].lower() == tr.spin.suffix and len(args) > 1:
             args.pop(-1)
         spin = ' '.join(args)
         data.spin_name[msg.chat_id] = spin
-        msg.reply_text(text=utils.get_lang(msg.chat_id, 'spin_name_changed').format(spin),
+        msg.reply_text(text=tr.spin.name_changed.format(spin),
                        parse_mode=ParseMode.MARKDOWN)
     else:
-        msg.reply_text(utils.get_lang(msg.chat_id, 'not_admin'))
+        msg.reply_text(tr.errors.not_admin)
 
 
+@utils.localize
 @utils.flood_limit
 @utils.not_pm
-def auto_spin_config(bot, update, args, job_queue):
+def auto_spin_config(bot, update, args, job_queue, tr):
     msg = update.effective_message
     if len(args) == 0:
         return
@@ -100,26 +103,26 @@ def auto_spin_config(bot, update, args, job_queue):
             if msg.chat_id in data.auto_spins:
                 data.auto_spin_jobs[msg.chat_id].schedule_removal()
         except (ValueError, IndexError):
-            msg.reply_text(utils.get_lang(msg.chat_id, 'time_error'))
+            msg.reply_text(tr.errors.time)
             return
 
         data.auto_spins.update({msg.chat_id: time})
         data.auto_spin_jobs.update({msg.chat_id: job})
-        msg.reply_text(utils.get_lang(update.effective_chat.id, 'auto_spin_on').format(time))
+        msg.reply_text(tr.auto_spin.state_on.format(time))
     elif cmd == 'del' and is_moder:
         if msg.chat_id in data.auto_spins:
             data.auto_spin_jobs.pop(msg.chat_id).schedule_removal()
             data.auto_spins.pop(msg.chat_id)
-            msg.reply_text(utils.get_lang(msg.chat_id, 'auto_spin_set_off'))
+            msg.reply_text(tr.auto_spin.set_off)
         else:
-            msg.reply_text(utils.get_lang(msg.chat_id, 'auto_spin_still_off'))
+            msg.reply_text(tr.auto_spin.still_off)
     elif cmd == 'status':
         if msg.chat_id in data.auto_spins:
-            msg.reply_text(utils.get_lang(msg.chat_id, 'auto_spin_on').format(data.auto_spins.get(msg.chat_id)))
+            msg.reply_text(tr.auto_spin.state_on.format(data.auto_spins.get(msg.chat_id)))
         else:
-            msg.reply_text(utils.get_lang(msg.chat_id, 'auto_spin_off'))
+            msg.reply_text(tr.auto_spin.state_off)
     elif not is_moder:
-        msg.reply_text(utils.get_lang(msg.chat_id, 'not_admin'))
+        msg.reply_text(tr.errors.not_admin)
 
 
 def choose_random_user(chat_id, bot) -> int:

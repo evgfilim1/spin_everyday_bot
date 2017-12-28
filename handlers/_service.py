@@ -13,12 +13,13 @@ from ._help import start_help_handler
 log = utils.set_up_logger(__name__, DEBUG)
 
 
-def handle_error(bot, update, error):
+@utils.localize
+def handle_error(bot, update, error, tr):
     if (isinstance(error, TimedOut) or update is None) and config.LOG_CHANNEL is not None:
         return
     log.error(f'Update {update} caused error: {error}')
     if config.SHOW_ERRORS:
-        update.effective_message.reply_text(utils.get_lang(update.effective_chat.id, 'error'))
+        update.effective_message.reply_text(tr.error)
 
 
 def update_cache(bot, update):

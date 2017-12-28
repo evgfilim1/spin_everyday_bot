@@ -60,3 +60,7 @@ optional arguments:
 ```
 
 **For Windows users:** use `python` or `py` instead of `python3`
+
+## Contributing
+Feel free to [report bugs or propose new features](https://github.com/evgfilim1/spin_everyday_bot/issues/new),
+ send pull requests and ask questions [on Telegram](https://t.me/evgfilim1)

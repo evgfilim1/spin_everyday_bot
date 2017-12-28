@@ -3,9 +3,7 @@
 # See full NOTICE at http://github.com/evgfilim1/spin_everyday_bot
 
 import pickle
-from os import listdir
 from os.path import exists
-from yaml import load
 from collections import Counter, defaultdict
 from functools import partial
 
@@ -18,7 +16,6 @@ results_total = defaultdict(Counter)    # {chat_id[int]: Counter({user_id[int]: 
 auto_spins = {}                         # {chat_id[int]: time[str]}
 auto_spin_jobs = {}                     # {chat_id[int]: job[telegram.ext.JobQueue.Job]}
 chat_config = {}                        # {chat_id[int]: {key[str]: value[bool|str]}
-languages = {}                          # {lang[str]: data[dict]}
 wotd_registered = set()                 # {user_id0[int], user_id1[int]}
 wotd = 0                                # wotd[int]
 chat_texts = {}                         # {chat_id: [[line1[str], line2[str]]}
@@ -37,17 +34,8 @@ def _save(obj, filename: str):
         pickle.dump(obj, ff, pickle.HIGHEST_PROTOCOL)
 
 
-def _load_lang():
-    for lang in listdir('lang'):
-        if not lang.endswith('.yaml'):
-            continue
-        with open(f'lang/{lang}', encoding='utf-8') as file:
-            strings = load(file)
-        lang = lang[:-5]  # Throw extension away
-        languages.update({lang: strings})
-
-
 def _load_all():
+    from lang import Localization
     global chat_users, usernames, spin_name, can_change_name, results_today, results_total, auto_spins
     global chat_config, wotd_registered, wotd, chat_texts
     p_set = partial(defaultdict, set)
@@ -63,7 +51,7 @@ def _load_all():
     wotd_registered = _load('wotdreg.pkl', default=set)
     wotd = _load('wotdwin.pkl', default=int)
     chat_texts = _load('texts.pkl')
-    _load_lang()
+    Localization.reload()
 
 
 def save_all():

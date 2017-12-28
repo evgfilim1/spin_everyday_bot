@@ -9,9 +9,10 @@ import utils
 import config
 
 
+@utils.localize
 @utils.flood_limit
 @utils.not_pm
-def admin_ctrl(bot, update, args):
+def admin_ctrl(bot, update, args, tr):
     msg = update.effective_message
     reply = msg.reply_to_message
     admins = utils.get_admins_ids(msg.chat_id)
@@ -22,23 +23,23 @@ def admin_ctrl(bot, update, args):
     cmd = args.pop(0)
     if cmd == 'add' and reply and is_admin:
         if utils.is_admin_for_bot(msg.chat_id, reply.from_user.id):
-            msg.reply_text(text=utils.get_lang(msg.chat_id, 'admin_still_allow'),
+            msg.reply_text(text=tr.admin.still_allow,
                            parse_mode=ParseMode.MARKDOWN)
         else:
             data.can_change_name[msg.chat_id].add(reply.from_user.id)
-            msg.reply_text(text=utils.get_lang(msg.chat_id, 'admin_allow'),
+            msg.reply_text(text=tr.admin.allow,
                            parse_mode=ParseMode.MARKDOWN)
     elif cmd == 'del' and reply and is_admin:
         if not utils.is_admin_for_bot(msg.chat_id, reply.from_user.id):
-            msg.reply_text(text=utils.get_lang(msg.chat_id, 'admin_still_deny'),
+            msg.reply_text(text=tr.admin.still_deny,
                            parse_mode=ParseMode.MARKDOWN)
         else:
             data.can_change_name[msg.chat_id].discard(reply.from_user.id)
-            msg.reply_text(text=utils.get_lang(msg.chat_id, 'admin_deny'),
+            msg.reply_text(text=tr.admin.deny,
                            parse_mode=ParseMode.MARKDOWN)
     elif cmd == 'list':
         users = ''
         for user in data.can_change_name[msg.chat_id]:
             users += data.usernames.get(user, f'id{user}') + '\n'
-        text = utils.get_lang(msg.chat_id, 'admin_list').format(users)
+        text = tr.admin.list.format(users)
         msg.reply_text(text, parse_mode=ParseMode.MARKDOWN)

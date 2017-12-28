@@ -7,6 +7,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, Tele
 import data
 import utils
 from ._spin import locks
+from lang import Localization
 
 
 def top_win(chat_id):
@@ -14,32 +15,35 @@ def top_win(chat_id):
 
 
 def make_top(chat_id, page):
+    tr = Localization(chat_id)
     winners = top_win(chat_id)
     winners, total_pages = utils.pages(winners, page)
-    text = utils.get_lang(chat_id, 'stats_all').format(page, total_pages)
+    text = tr.stats.all.format(page, total_pages)
     for user in winners:
         username = data.usernames.get(user[0], f'id{user[0]}')
-        text += utils.get_lang(chat_id, 'stats_user_short').format(username, user[1])
+        text += tr.stats.user_short.format(username, user[1])
     return text, total_pages
 
 
-def make_userlist(chat_id: int, page: int) -> (str, int):
+def make_userlist(chat_id, page):
+    tr = Localization(chat_id)
     users, total_pages = utils.pages(data.chat_users[chat_id], page)
-    text = utils.get_lang(chat_id, 'list').format(page, total_pages)
+    text = tr.user.list.format(page, total_pages)
     for user in users:
         username = data.usernames.get(user, f'id{user}')
         text += f'`{username}`\n'
     return text, total_pages
 
 
-def pages_handler(bot, update):
+@utils.localize
+def pages_handler(bot, update, tr):
     query = update.callback_query
     _type, data = query.data.split(':')
     msg = query.message
     page_n = int(data.split('_')[1])
     if _type == 'top':
         if msg.chat_id in locks:
-            query.answer(utils.get_lang(msg.chat_id, 'locked_buttons'))
+            query.answer(tr.locked_buttons)
             return
         text, max_pages = make_top(msg.chat_id, page=page_n)
     else:
@@ -57,9 +61,10 @@ def pages_handler(bot, update):
         pass
 
 
+@utils.localize
 @utils.flood_limit
 @utils.not_pm
-def top(bot, update, args):
+def top(bot, update, args, tr):
     chat_id = update.message.chat_id
     reply_keyboard = [[]]
     if chat_id in locks:
@@ -68,12 +73,12 @@ def top(bot, update, args):
         user = update.message.from_user
         username = user.name
         stat = data.results_total[chat_id][user.id]
-        text = utils.get_lang(chat_id, 'stats_me').format(username, stat)
+        text = tr.stats.me.format(username, stat)
     elif update.message.reply_to_message:
         user = update.message.reply_to_message.from_user
         username = user.name
         stat = data.results_total[chat_id][user.id]
-        text = utils.get_lang(chat_id, 'stats_user').format(username, stat)
+        text = tr.stats.user.format(username, stat)
     else:
         text, pages = make_top(chat_id, page=1)
         if pages > 1:
@@ -82,9 +87,10 @@ def top(bot, update, args):
                               reply_markup=InlineKeyboardMarkup(reply_keyboard))
 
 
+@utils.localize
 @utils.flood_limit
 @utils.not_pm
-def user_list(bot, update):
+def user_list(bot, update, tr):
     chat_id = update.message.chat_id
     if utils.get_config_key(chat_id, 'show_list', default=False):
         reply_keyboard = [[]]
@@ -94,4 +100,4 @@ def user_list(bot, update):
         update.message.reply_text(text=text, parse_mode=ParseMode.MARKDOWN,
                                   reply_markup=InlineKeyboardMarkup(reply_keyboard))
     else:
-        update.message.reply_text(utils.get_lang(chat_id, 'list_off'))
+        update.message.reply_text(tr.user.list_off)

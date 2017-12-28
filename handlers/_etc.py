@@ -16,10 +16,10 @@ def bot_started():
     start_time = datetime.now()
 
 
+@utils.localize
 @utils.flood_limit
-def uptime(bot, update):
-    update.message.reply_text(utils.get_lang(update.message.chat_id,
-                                             'uptime').format(datetime.now() - start_time))
+def uptime(bot, update, tr):
+    update.message.reply_text(tr.uptime.format(datetime.now() - start_time))
 
 
 @utils.flood_limit
@@ -27,9 +27,9 @@ def ping(bot, update):
     update.message.reply_text(text='Ping? Pong!')
 
 
+@utils.localize
 @utils.flood_limit
 @utils.not_pm
-def spin_count(bot, update):
-    update.message.reply_text(text=utils.get_lang(update.effective_chat.id,
-                                                  'user_count').format(len(data.chat_users[update.message.chat_id])),
+def spin_count(bot, update, tr):
+    update.message.reply_text(text=tr.user.count.format(len(data.chat_users[update.message.chat_id])),
                               parse_mode=ParseMode.MARKDOWN)

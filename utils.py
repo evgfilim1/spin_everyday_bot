@@ -123,12 +123,26 @@ def is_private(chat_id) -> bool:
     return chat_id > 0
 
 
+def localize(f):
+    from lang import Localization
+
+    @wraps(f)
+    def wrapper(bot, update, *args, **kwargs):
+        locale = Localization(update.effective_chat.id)
+        return f(bot, update, *args, tr=locale, **kwargs)
+
+    return wrapper
+
+
 def not_pm(f):
+    from lang import Localization
+
     @wraps(f)
     def wrapper(bot, update, *args, **kwargs):
         msg = update.effective_message
+        tr = Localization(msg.chat_id)
         if is_private(msg.chat_id):
-            msg.reply_text(get_lang(msg.chat_id, 'not_in_pm'))
+            msg.reply_text(tr.status.not_in_pm)
             return
         return f(bot, update, *args, **kwargs)
 
@@ -136,13 +150,16 @@ def not_pm(f):
 
 
 def flood_limit(f):
+    from lang import Localization
+
     @wraps(f)
     def wrapper(bot, update, *args, **kwargs):
         chat_id = update.effective_chat.id
+        tr = Localization(chat_id)
         count = data.flood[chat_id]
         if count == config.FLOOD_LIMIT:
             data.flood[chat_id] += 1
-            update.effective_message.reply_text(get_lang(chat_id, 'flood_lim'))
+            update.effective_message.reply_text(tr.flood_lim)
         if count >= config.FLOOD_LIMIT:
             return
         else:
@@ -153,11 +170,14 @@ def flood_limit(f):
 
 
 def admin_only(f):
+    from lang import Localization
+
     @wraps(f)
     def wrapper(bot, update, *args, **kwargs):
         chat_id = update.effective_chat.id
+        tr = Localization(chat_id)
         if not is_admin_for_bot(chat_id, update.effective_user.id):
-            update.effective_message.reply_text(get_lang(chat_id, 'not_admin'))
+            update.effective_message.reply_text(tr.errors.not_admin)
             return
         return f(bot, update, *args, **kwargs)
 
@@ -197,7 +217,7 @@ def is_admin_for_bot(chat_id, user_id):
            user_id in data.can_change_name[chat_id]
 
 
-def get_admins_ids(chat_id) -> list:
+def get_admins_ids(chat_id):
     admins = _bot.get_chat_administrators(chat_id=chat_id)
     result = [admin.user.id for admin in admins]
     return result
@@ -213,11 +233,11 @@ def get_config_key(chat_id, key, default=None):
     return data.chat_config.get(chat_id, {}).get(key, default)
 
 
-def get_lang(chat_id, key):
-    lang = get_config_key(chat_id, 'lang', default=config.FALLBACK_LANG)
-    if data.languages.get(lang) is None or data.languages.get(lang).get(key) is None:
-        lang = config.FALLBACK_LANG
-    return data.languages.get(lang, {}).get(key, '!!!Translation is missing!!!')
+# def get_lang(chat_id, key):
+#     from warnings import warn
+#     from lang import Localization
+#     warn(f'utils.get_lang is deprecated, use lang.Localization instead', DeprecationWarning, stacklevel=1)
+#     return Localization('ru_old')[key]
 
 
 if config.LOG_FILE is None:

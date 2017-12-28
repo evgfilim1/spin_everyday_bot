@@ -8,6 +8,7 @@ from telegram import ParseMode, TelegramError
 
 import data
 import utils
+from lang import Localization
 from ._spin import choose_random_user
 
 log = utils.set_up_logger(__name__, DEBUG)
@@ -18,8 +19,9 @@ def daily_job(bot, job=None):
     log.debug('Reset done')
     try:
         uid = choose_random_user(0, bot)
-        text = choice(utils.get_lang(uid, 'default_spin_texts'))[-1]
-        bot.send_message(uid, text.format(s=utils.get_lang(uid, 'wotd'), n=data.usernames.get(uid)),
+        tr = Localization(uid)
+        text = choice(tr.default_spin_texts)[-1]
+        bot.send_message(uid, text.format(s=tr.wotd.winner, n=data.usernames.get(uid)),
                          parse_mode=ParseMode.MARKDOWN)
     except (TelegramError, IndexError):
         pass

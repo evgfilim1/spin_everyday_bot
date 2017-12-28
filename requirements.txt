@@ -1,2 +1,1 @@
-python-telegram-bot>=8.0,<9.0
-PyYAML>=3.12
+python-telegram-bot>=9.0,<10.0
