@@ -2,6 +2,7 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ab340c80e3e64d75b0fd32b82d790f8f)](https://www.codacy.com/app/evgfilim1/spin_everyday_bot)
 [![Requirements Status](https://requires.io/github/evgfilim1/spin_everyday_bot/requirements.svg?branch=indev)](https://requires.io/github/evgfilim1/spin_everyday_bot/requirements/?branch=indev)
+[![Translation Status](http://weblate.evgfilim1.me/widgets/spin_everyday_bot/-/svg-badge.svg)](http://weblate.evgfilim1.me/engage/spin_everyday_bot/?utm_source=widget)
 
 ## Setting up
 
