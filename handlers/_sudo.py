@@ -103,7 +103,7 @@ def _vardump(bot, msg, args, **kwargs):
                      reply_to_message_id=msg.message_id)
 
 
-def _reset(bot, *kwargs):
+def _reset(bot, **kwargs):
     """reset — begin new day"""
     daily_job(bot, None)
 

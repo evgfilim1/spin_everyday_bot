@@ -48,6 +48,8 @@ class Localization:
             result = self._data[item]
         if isinstance(result, dict):
             return self.__class__(self._lang, data=result)
+        elif not isinstance(result, str):
+            return result
         else:
             return self.__languages.get(self._lang, self.__languages.get(FALLBACK_LANG))(result)
 
