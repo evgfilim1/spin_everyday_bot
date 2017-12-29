@@ -38,13 +38,51 @@ def helper(bot, update, short, tr):
     update.message.reply_text(text=text, parse_mode=ParseMode.MARKDOWN, reply_markup=InlineKeyboardMarkup(keys))
 
 
+@utils.localize
 @utils.flood_limit
-def start_help_handler(bot, update, args):
-    if (len(args) > 0 and args[0] == 'help') or (utils.is_private(update.message.chat_id) and
-                                                 not update.message.text.startswith('/start')):
-        helper(bot, update, short=False)
-    else:
-        helper(bot, update, short=True)
+def start_help_handler(bot, update, args, tr):
+    from functools import partial
+    _help = partial(helper, bot, update)
+    # '/start' => short help
+    # '/start help' => long help
+    # '/help' in PM => long help
+    # '/help' in chat => short help
+    # '/help <command>' => help for the command
+    if update.effective_message.text.startswith('/start'):
+        if len(args) > 0 and args[0] == 'help':
+            _help(short=False)
+        else:
+            _help(short=True)
+    else:  # /help
+        if len(args) > 0:
+            if args[0][0] == '/':
+                command = args[0][1:]
+            else:
+                command = args[0]
+            if command not in tr.help_texts['main'][1]:
+                update.effective_message.reply_text(tr.errors.command.format(f'/{command}'))
+                return
+            update.effective_message.reply_text(help_command(command, tr), parse_mode=ParseMode.MARKDOWN)
+        elif utils.is_private(update.effective_chat.id):
+            _help(short=False)
+        else:
+            _help(short=True)
+
+
+def help_command(command, tr):
+    command_info = tr.help_texts['main'][1][command]
+    text = '`/{0}` - {1}\n\n'.format(command, command_info['summary'])
+    text += tr.help.usage + '\n'
+    for suffix, suffix_info in command_info['usage'].items():
+        if suffix != '':
+            suffix = ' ' + suffix
+        text += f'/{command}{suffix} - {suffix_info["text"]} '
+        if suffix_info.get('reply', False):
+            text += tr.help.onlyreply + ' '
+        if suffix_info.get('admin', False):
+            text += tr.help.onlyadmin
+        text += '\n'
+    return text
 
 
 @utils.localize
@@ -72,19 +110,7 @@ def help_button_handler(bot, update, tr):
         keys = [[
             InlineKeyboardButton(text=tr.back, callback_data='help:main')
         ]]
-        command_info = tr.help_texts['main'][1][data]
-
-        text = '`/{0}` - {1}\n\n'.format(data, command_info['summary'])
-        text += tr.help.usage + '\n'
-        for suffix, suffix_info in command_info['usage'].items():
-            if suffix != '':
-                suffix = ' ' + suffix
-            text += f'/{data}{suffix} - {suffix_info["text"]} '
-            if suffix_info.get('reply', False):
-                text += tr.help.onlyreply + ' '
-            if suffix_info.get('admin', False):
-                text += tr.help.onlyadmin
-            text += '\n'
+        text = help_command(data, tr)
     try:
         query.edit_message_text(reply_markup=InlineKeyboardMarkup(keys), parse_mode=ParseMode.MARKDOWN, text=text)
     except TelegramError:
