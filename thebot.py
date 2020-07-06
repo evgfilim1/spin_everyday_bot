@@ -239,7 +239,7 @@ def ping(bot: Bot, update: Update):
 @core.not_pm
 def do_the_sрin(bot: Bot, update: Update):
     chat_id = update.message.chat_id
-    s = escape_markdown(core.spin_name.get(chat_id, config.DEFAULT_SPIN_NAME).replace('*', '\\*'))
+    s = core.spin_name.get(chat_id, config.DEFAULT_SPIN_NAME).replace('*', '\\*')
     p = core.results_today.get(chat_id)
     if p is None or chat_id in locks:
         return
@@ -251,7 +251,7 @@ def do_the_sрin(bot: Bot, update: Update):
 @core.not_pm
 def do_the_spin(bot: Bot, update: Update):
     chat_id = update.message.chat_id
-    s = escape_markdown(core.spin_name.get(chat_id, config.DEFAULT_SPIN_NAME).replace('*', '\\*'))
+    s = core.spin_name.get(chat_id, config.DEFAULT_SPIN_NAME).replace('*', '\\*')
     p = core.results_today.get(chat_id)
     if chat_id in locks:
         return
