@@ -1,4 +1,0 @@
-/data/*
-!/data/__init__.py
-config.py
-__pycache__
