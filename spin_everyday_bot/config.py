@@ -35,7 +35,7 @@ class TelegramConfig:
 
 @dataclass(frozen=True)
 class DatabaseConfig:
-    host: IPvAnyAddress
+    host: str
     port: int
     user: str
     password: SecretStr
@@ -48,7 +48,7 @@ class DatabaseConfig:
             scheme="postgresql",
             user=self.user,
             password=self.password.get_secret_value(),
-            host=str(self.host),
+            host=self.host,
             port=str(self.port),
             path=f"/{self.database}",
         )
