@@ -17,7 +17,7 @@ __all__ = ["Config", "DatabaseConfig", "read_config", "TelegramConfig"]
 from os import getcwd, path
 from pathlib import Path
 
-from pydantic import IPvAnyAddress, PostgresDsn, SecretStr
+from pydantic import PostgresDsn, SecretStr
 from pydantic.dataclasses import dataclass
 from xdg import BaseDirectory
 from yaml import safe_load as yaml_load
