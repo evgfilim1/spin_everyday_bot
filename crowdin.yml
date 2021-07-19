@@ -1,0 +1,3 @@
+files:
+  - source: /spin_everyday_bot/lang/spin_everyday_bot.pot
+    translation: /spin_everyday_bot/lang/%two_letters_code%/%file_name%.po
