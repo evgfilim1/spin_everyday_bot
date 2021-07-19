@@ -21,7 +21,8 @@ from .. import APP_NAME
 
 class Translation:
     def __init__(self, language: Optional[str] = None):
-        """Provides access to translations
+        """
+        Provides access to translations.
 
         :param language: Desired language or `None` to use system default.
         """
@@ -38,9 +39,9 @@ class Translation:
             )
 
     def gettext(self, message: str) -> str:
-        """Get translation for specified message"""
+        """Get translation for specified message."""
         return self.tr.gettext(message)
 
     def ngettext(self, singular: str, plural: str, n: int) -> str:
-        """Get translation for specified message with plural support"""
+        """Get translation for specified message with plural support."""
         return self.tr.ngettext(singular, plural, n)

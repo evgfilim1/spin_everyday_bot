@@ -14,7 +14,7 @@
 
 __all__ = ["setup"]
 
-from typing import Any, Awaitable, Callable, Optional, Type, TypeVar, Union
+from typing import Any, Awaitable, Callable, Optional, Type, TypeVar
 
 from aiogram import Dispatcher, types
 from sqlalchemy import select

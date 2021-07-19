@@ -12,10 +12,11 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Init
+"""
+Init.
 
 Revision ID: 67f1cdf26b82
-Revises: 
+Revises:
 Create Date: 2021-07-19 10:42:56.116217
 
 """

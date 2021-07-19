@@ -61,7 +61,7 @@ class Config:
 
 
 def read_config() -> Config:
-    """Read config file and return a :class:`spin_everyday_bot.config.Config` object"""
+    """Read config file and return a :class:`spin_everyday_bot.config.Config` object."""
     config_file = Path(
         BaseDirectory.load_first_config(APP_NAME, CONFIG_FILE_NAME)
         or path.join(getcwd(), CONFIG_FILE_NAME)
