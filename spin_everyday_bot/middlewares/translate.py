@@ -34,10 +34,10 @@ async def _get_language(
     obj_class: _DBT,
     obj_id: int,
 ) -> Optional[str]:
-    query = await conn.execute(select(obj_class).where(obj_class.id == obj_id))
-    obj: Optional[_DBT] = query.one_or_none()
+    query = await conn.execute(select(obj_class.language).where(obj_class.id == obj_id))
+    obj: Optional[_DBT] = query.scalar_one_or_none()
     if obj is not None:
-        return obj.language
+        return obj
     return None
 
 
@@ -50,9 +50,9 @@ async def translate(
     lang: Optional[str] = None
     chat: types.Chat
     user: types.User
-    if (chat := data.get("event_chat")) is not None and chat.type != "private":
+    if (chat := getattr(event, "chat", None)) is not None and chat.type != "private":
         lang = await _get_language(conn, models.Chat, chat.id)
-    if lang is None and (user := data.get("event_user")) is not None:
+    if lang is None and (user := getattr(event, "from_user", None)) is not None:
         lang = await _get_language(conn, models.User, user.id)
         if lang is None:
             lang = user.language_code
@@ -61,4 +61,5 @@ async def translate(
 
 
 def setup(dp: Dispatcher) -> None:
-    dp.update.middleware(translate)
+    dp.message.middleware(translate)
+    dp.edited_message.middleware(translate)

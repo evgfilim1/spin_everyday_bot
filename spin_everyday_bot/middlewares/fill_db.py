@@ -17,7 +17,7 @@ __all__ = ["setup"]
 from typing import Any, Awaitable, Callable, TypeVar
 
 from aiogram import Dispatcher, types
-from sqlalchemy import insert
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import models
@@ -35,7 +35,11 @@ async def fill_event(
     conn: AsyncSession = data["db"]
     chat: types.Chat
     user: types.User
-    if (user := data.get("event_user")) is not None:
+    if (
+        (user := getattr(event, "from_user", None)) is not None
+        and user.id != 777000  # messages automatically forwarded to the discussion group
+        and user.id != 1087968824  # messages from anonymous group administrators
+    ):
         res = await conn.execute(
             insert(models.User)
             .values(
@@ -44,16 +48,17 @@ async def fill_event(
                 full_name=user.full_name,
             )
             .on_conflict_do_update(
-                constraint=models.User.id,
+                constraint=models.User.__table__.primary_key,
                 set_={
                     models.User.username: user.username,
                     models.User.full_name: user.full_name,
                 },
-            ),
+            )
+            .returning(models.User),
         )
         db_user: models.User = res.one()
         data["user"] = db_user
-        if (chat := data.get("event_chat")) is not None and chat.type != "private":
+        if (chat := getattr(event, "chat", None)) is not None and chat.type != "private":
             # event.chat always exists when event.user exists
             res = await conn.execute(
                 insert(models.Chat)
@@ -76,4 +81,5 @@ async def fill_event(
 
 
 def setup(dp: Dispatcher) -> None:
-    dp.update.middleware(fill_event)
+    dp.message.middleware(fill_event)
+    dp.edited_message.middleware(fill_event)
