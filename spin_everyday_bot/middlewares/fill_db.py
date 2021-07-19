@@ -15,7 +15,9 @@ __all__ = ["setup"]
 from typing import Any, Awaitable, Callable, TypeVar
 
 from aiogram import Dispatcher, types
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import models
@@ -52,7 +54,7 @@ async def fill_event(
                     models.User.full_name: user.full_name,
                 },
             )
-            .returning(models.User),
+            .returning(models.User)
         )
         db_user: models.User = res.one()
         data["user"] = db_user
@@ -63,9 +65,15 @@ async def fill_event(
                 .values(
                     id=chat.id,
                 )
-                .on_conflict_do_nothing(),
+                .on_conflict_do_nothing()
+                .returning(models.Chat)
             )
-            db_chat: models.Chat = res.one()
+            try:
+                db_chat: models.Chat = res.one()
+            except NoResultFound:
+                res = await conn.execute(select(models.Chat).where(models.Chat.id == chat.id))
+                db_chat = res.one()[0]
+            data["chat"] = db_chat
             await conn.execute(
                 insert(models.ChatUser)
                 .values(

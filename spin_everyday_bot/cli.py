@@ -23,7 +23,7 @@ from pydantic import IPvAnyAddress
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from . import handlers, middlewares, __version__
+from . import __version__, handlers, middlewares
 from .config import Config, read_config
 from .lang import gettext as _
 

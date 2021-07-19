@@ -75,7 +75,9 @@ class ChatUser(Base):
 
     id = Column(Integer(), primary_key=True, autoincrement=True)
     user_id = Column(ForeignKey(User.id, ondelete="cascade", onupdate="cascade"), nullable=False)
+    user = relationship("User", uselist=False)
     chat_id = Column(ForeignKey(Chat.id, ondelete="cascade", onupdate="cascade"), nullable=False)
+    chat = relationship("Chat", uselist=False)
 
     __table_args__ = (UniqueConstraint(user_id, chat_id),)
 
