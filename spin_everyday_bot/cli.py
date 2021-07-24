@@ -66,8 +66,7 @@ def _parse_args(
 
 
 async def _main(args: Args, config: Config) -> None:
-    dsn = config.db.dsn.replace("postgresql", "postgresql+asyncpg")
-    engine = create_async_engine(dsn, future=True)
+    engine = create_async_engine(config.db.dsn, future=True)
     session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, future=True)()
 
     bot = Bot(config.telegram.token, parse_mode="HTML")

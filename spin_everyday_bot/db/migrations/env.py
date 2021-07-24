@@ -10,35 +10,35 @@
 #  You should have received a copy of the GNU Affero General Public License along with this program.
 #  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import create_engine, pool
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from spin_everyday_bot.config import read_config
-
-# noinspection PyProtectedMember
 from spin_everyday_bot.db.models import Base
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
+# this is the Alembic Config object, which provides access to the values within the .ini file.
 config = context.config
+
+# this is the current app Config object, which allows us to get db url.
 app_config = read_config()
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
+# add your model's MetaData object here for 'autogenerate' support
 target_metadata = Base.metadata
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+
+def do_run_migrations(connection):
+    context.configure(connection=connection, target_metadata=target_metadata)
+
+    with context.begin_transaction():
+        context.run_migrations()
 
 
 def run_migrations_offline():
@@ -53,9 +53,8 @@ def run_migrations_offline():
     Calls to context.execute() here emit the given string to the
     script output.
     """
-    url = app_config.db.dsn
     context.configure(
-        url=url,
+        url=app_config.db.dsn,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -65,26 +64,26 @@ def run_migrations_offline():
         context.run_migrations()
 
 
-def run_migrations_online():
+async def run_migrations_online():
     """
     Run migrations in 'online' mode.
 
     In this scenario we need to create an Engine
     and associate a connection with the context.
     """
-    connectable = create_engine(
-        app_config.db.dsn,
-        poolclass=pool.NullPool,
+    connectable = AsyncEngine(
+        create_engine(
+            app_config.db.dsn,
+            poolclass=pool.NullPool,
+            future=True,
+        )
     )
 
-    with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
-
-        with context.begin_transaction():
-            context.run_migrations()
+    async with connectable.connect() as connection:
+        await connection.run_sync(do_run_migrations)
 
 
 if context.is_offline_mode():
     run_migrations_offline()
 else:
-    run_migrations_online()
+    asyncio.run(run_migrations_online())

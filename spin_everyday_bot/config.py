@@ -43,7 +43,7 @@ class DatabaseConfig:
     def dsn(self) -> PostgresDsn:
         return PostgresDsn(
             None,
-            scheme="postgresql",
+            scheme="postgresql+asyncpg",
             user=self.user,
             password=self.password.get_secret_value(),
             host=self.host,
