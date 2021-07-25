@@ -12,10 +12,10 @@
 
 from aiogram import Router
 
-from .ping import router as ping
+from . import ping, raffle, raffle_name, superuser
 
 
 def register(root: Router) -> Router:
-    for _r in (ping,):
-        root.include_router(_r)
+    for m in (ping, raffle, raffle_name, superuser):
+        root.include_router(m.router)
     return root

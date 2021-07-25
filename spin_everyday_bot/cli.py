@@ -92,7 +92,11 @@ async def _main(args: Args, config: Config) -> None:
 
     if args.strategy == "webhook":
         raise NotImplementedError(_("Getting updates via webhook is not implemented yet"))
-    await dp.start_polling(bot, session_factory=session_factory)
+    await dp.start_polling(
+        bot,
+        session_factory=session_factory,
+        superuser_id=config.telegram.superuser_id,
+    )
 
 
 def main() -> None:

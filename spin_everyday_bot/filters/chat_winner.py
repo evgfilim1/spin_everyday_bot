@@ -10,23 +10,12 @@
 #  You should have received a copy of the GNU Affero General Public License along with this program.
 #  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = [
-    "DEFAULT_RAFFLE_NAME",
-    "dirs",
-    "ONLY_GROUPS",
-]
+__all__ = ["has_winner"]
 
-from gettext import NullTranslations
+from aiogram.types import TelegramObject
 
-from platformdirs import PlatformDirs
+from ..db import models
 
-from . import APP_NAME, __author__
 
-dirs = PlatformDirs(APP_NAME, __author__, "2.x")
-
-_ = NullTranslations().gettext  # stub, constants in the file will be translated lazily later
-
-# region Common Constants
-ONLY_GROUPS = _("This command will work only in group chats.")
-DEFAULT_RAFFLE_NAME = _("winner")
-# endregion
+def has_winner(_: TelegramObject, chat: models.Chat):
+    return chat.winner is not None

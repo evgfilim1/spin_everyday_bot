@@ -10,23 +10,25 @@
 #  You should have received a copy of the GNU Affero General Public License along with this program.
 #  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = [
-    "DEFAULT_RAFFLE_NAME",
-    "dirs",
-    "ONLY_GROUPS",
-]
+__all__ = ["SubcommandFilter"]
 
-from gettext import NullTranslations
+from dataclasses import replace
+from typing import Any, Union, cast
 
-from platformdirs import PlatformDirs
+from aiogram import Bot
+from aiogram.dispatcher.filters import Command, CommandObject
+from aiogram.types import Message
 
-from . import APP_NAME, __author__
 
-dirs = PlatformDirs(APP_NAME, __author__, "2.x")
+class SubcommandFilter(Command):
+    subcommand: str
 
-_ = NullTranslations().gettext  # stub, constants in the file will be translated lazily later
-
-# region Common Constants
-ONLY_GROUPS = _("This command will work only in group chats.")
-DEFAULT_RAFFLE_NAME = _("winner")
-# endregion
+    async def __call__(self, message: Message, bot: Bot) -> Union[bool, dict[str, Any]]:
+        result = await super().__call__(message, bot)
+        if not result:
+            return False
+        command: CommandObject = cast(dict, result)["command"]
+        subcommand, *args = command.args.split(" ", maxsplit=1)
+        if subcommand != self.subcommand:
+            return False
+        return {"command": replace(command, args=args[0] if args else "")}

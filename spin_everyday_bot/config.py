@@ -34,7 +34,7 @@ def _find_config() -> Optional[Path]:
 @dataclass(frozen=True)
 class TelegramConfig:
     token: str
-    superuser_id: str
+    superuser_id: int
 
 
 @dataclass(frozen=True)

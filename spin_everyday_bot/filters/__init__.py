@@ -11,22 +11,15 @@
 #  If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = [
-    "DEFAULT_RAFFLE_NAME",
-    "dirs",
-    "ONLY_GROUPS",
+    "has_winner",
+    "is_chat_admin",
+    "is_group_chat",
+    "is_superuser",
+    "SubcommandFilter",
 ]
 
-from gettext import NullTranslations
-
-from platformdirs import PlatformDirs
-
-from . import APP_NAME, __author__
-
-dirs = PlatformDirs(APP_NAME, __author__, "2.x")
-
-_ = NullTranslations().gettext  # stub, constants in the file will be translated lazily later
-
-# region Common Constants
-ONLY_GROUPS = _("This command will work only in group chats.")
-DEFAULT_RAFFLE_NAME = _("winner")
-# endregion
+from .chat_admin import is_chat_admin
+from .chat_winner import has_winner
+from .group_chat import is_group_chat
+from .subcommand import SubcommandFilter
+from .superuser import is_superuser

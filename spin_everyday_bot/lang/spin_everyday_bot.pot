@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: spin_everyday_bot 2.0.0-alpha.0\n"
 "Report-Msgid-Bugs-To: evgfilim1@yandex.ru\n"
-"POT-Creation-Date: 2021-07-25 22:57+0500\n"
+"POT-Creation-Date: 2021-07-26 02:34+0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,32 +29,40 @@ msgstr ""
 msgid "Telegram bot for everyday raffles"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:54
+#: spin_everyday_bot/cli.py:53
 msgid "Full path to config file"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:58
+#: spin_everyday_bot/cli.py:56
 msgid "How to fetch updates, see https://core.telegram.org/bots/api#getting-updates"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:63
+#: spin_everyday_bot/cli.py:59
 msgid "Run with polling (default)"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:66
+#: spin_everyday_bot/cli.py:61
 msgid "Run with webhooks (not supported yet)"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:73
+#: spin_everyday_bot/cli.py:63
 msgid "Host to listen at"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:76
+#: spin_everyday_bot/cli.py:65
 msgid "Port to listen at"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:104
+#: spin_everyday_bot/cli.py:94
 msgid "Getting updates via webhook is not implemented yet"
+msgstr ""
+
+#: spin_everyday_bot/misc.py:30
+msgid "This command will work only in group chats."
+msgstr ""
+
+#: spin_everyday_bot/misc.py:31
+msgid "winner"
 msgstr ""
 
 #: spin_everyday_bot/handlers/ping.py:36
@@ -62,5 +70,64 @@ msgid ""
 "Pong!\n"
 "Answer time: {0:.2f}s\n"
 "Database ping: {1:.2f}s"
+msgstr ""
+
+#: spin_everyday_bot/handlers/raffle.py:38
+msgid "So, who's <b>{name} of the day</b>?"
+msgstr ""
+
+#: spin_everyday_bot/handlers/raffle.py:39
+msgid "Hmm... Interesting."
+msgstr ""
+
+#: spin_everyday_bot/handlers/raffle.py:40
+msgid "Wow! You are <b>{name} of the day</b>, {user}!"
+msgstr ""
+
+#: spin_everyday_bot/handlers/raffle.py:43
+msgid "Are you sure?"
+msgstr ""
+
+#: spin_everyday_bot/handlers/raffle.py:44
+msgid "Are you <b>REALLY</b> sure?!"
+msgstr ""
+
+#: spin_everyday_bot/handlers/raffle.py:45
+msgid "Anyway, I won't stop."
+msgstr ""
+
+#: spin_everyday_bot/handlers/raffle.py:46
+msgid "Now you are <b>{name} of the day</b>, {user}. Deal with it."
+msgstr ""
+
+#: spin_everyday_bot/handlers/raffle.py:117
+msgid "According to today raffle, <b>{name} of the day</b> is {user}."
+msgstr ""
+
+#: spin_everyday_bot/handlers/raffle.py:140
+msgid "No users are registered in the raffle :("
+msgstr ""
+
+#: spin_everyday_bot/handlers/raffle_name.py:51
+msgid "Raffle name updated: <i>{0}</i> → <i>{1}</i>."
+msgstr ""
+
+#: spin_everyday_bot/handlers/raffle_name.py:66
+msgid ""
+"Current raffle name: <i>{0}</i>.\n"
+"\n"
+"To change raffle name, send <code>/{1} &lt;new_name&gt;</code>."
+msgstr ""
+
+#: spin_everyday_bot/handlers/superuser.py:34
+msgid "No chat ID specified"
+msgstr ""
+
+#: spin_everyday_bot/handlers/superuser.py:39
+msgid "Invalid chat ID specified"
+msgstr ""
+
+#: spin_everyday_bot/handlers/superuser.py:42
+msgid "Raffle result was reset in chat {0}"
 msgstr ""
 

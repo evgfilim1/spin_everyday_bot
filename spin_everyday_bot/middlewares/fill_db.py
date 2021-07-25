@@ -36,7 +36,7 @@ async def fill_event(
     chat: types.Chat
     user: types.User
     if (
-        (user := getattr(event, "from_user", None)) is not None
+        (user := data.get("event_from_user")) is not None
         and user.id != 777000  # messages automatically forwarded to the discussion group
         and user.id != 1087968824  # messages from anonymous group administrators
     ):
@@ -58,7 +58,7 @@ async def fill_event(
         )
         db_user: models.User = res.one()
         data["user"] = db_user
-        if (chat := getattr(event, "chat", None)) is not None and chat.type != "private":
+        if (chat := data.get("event_chat")) is not None and chat.type != "private":
             # event.chat always exists when event.user exists
             res = await conn.execute(
                 insert(models.Chat)
@@ -87,5 +87,4 @@ async def fill_event(
 
 
 def setup(dp: Dispatcher) -> None:
-    dp.message.middleware(fill_event)
-    dp.edited_message.middleware(fill_event)
+    dp.update.middleware(fill_event)
