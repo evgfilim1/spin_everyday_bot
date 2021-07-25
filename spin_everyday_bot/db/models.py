@@ -55,8 +55,8 @@ class Chat(Base):
     id = Column(BigInteger(), primary_key=True)
     raffle_name = Column(String())
     winner_id = Column(ForeignKey(User.id, ondelete="set null", onupdate="cascade"))
-    winner = relationship("User", uselist=False)
-    users = relationship("User", secondary="chat_users")
+    winner = relationship("User", uselist=False, lazy="selectin")
+    users = relationship("User", secondary="chat_users", lazy="selectin")
     language = Column(String())
     timezone_offset_min = Column(SmallInteger(), nullable=False, default=0)
 
@@ -75,9 +75,9 @@ class ChatUser(Base):
 
     id = Column(Integer(), primary_key=True, autoincrement=True)
     user_id = Column(ForeignKey(User.id, ondelete="cascade", onupdate="cascade"), nullable=False)
-    user = relationship("User", uselist=False)
+    user = relationship("User", uselist=False, lazy="selectin")
     chat_id = Column(ForeignKey(Chat.id, ondelete="cascade", onupdate="cascade"), nullable=False)
-    chat = relationship("Chat", uselist=False)
+    chat = relationship("Chat", uselist=False, lazy="selectin")
 
     __table_args__ = (UniqueConstraint(user_id, chat_id),)
 

@@ -77,9 +77,12 @@ def _parse_args(
 
 async def _main(args: Args, config: Config) -> None:
     engine = create_async_engine(config.db.dsn, future=True)
-    session = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False, future=True
-    )()
+    session_factory = sessionmaker(
+        engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        future=True,
+    )
 
     bot = Bot(config.telegram.token, parse_mode="HTML")
     dp = Dispatcher()
@@ -88,10 +91,8 @@ async def _main(args: Args, config: Config) -> None:
     middlewares.register(dp)
 
     if args.strategy == "webhook":
-        raise NotImplementedError(
-            _("Getting updates via webhook is not implemented yet")
-        )
-    await dp.start_polling(bot, db=session)
+        raise NotImplementedError(_("Getting updates via webhook is not implemented yet"))
+    await dp.start_polling(bot, session_factory=session_factory)
 
 
 def main() -> None:

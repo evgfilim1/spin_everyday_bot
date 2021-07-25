@@ -41,8 +41,7 @@ async def migrate(
             execution_options={"synchronize_session": "fetch"},
         )
         await conn.commit()
-        # Further update processing is useless as we have migrated
-        return
+        return None  # Further update processing is useless as we have migrated
     return await handler(message, data)
 
 

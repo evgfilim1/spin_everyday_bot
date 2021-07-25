@@ -10,15 +10,33 @@
 #  You should have received a copy of the GNU Affero General Public License along with this program.
 #  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ["register"]
-
-from aiogram import Dispatcher, Router
-
-from . import db, fill_db, migrate, translate
+__all__ = ["setup"]
 
 
-def register(root: Dispatcher) -> Router:
-    db.setup(root)  # make sure "db" is registered first to run first
-    for mod in (fill_db, migrate, translate):
-        mod.setup(root)
-    return root
+from typing import Any, Awaitable, Callable, TypeVar
+
+from aiogram import Dispatcher, types
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import sessionmaker
+
+_T = TypeVar("_T", bound=types.TelegramObject)
+_RT = TypeVar("_RT")
+_DT = dict[str, Any]
+
+
+async def create_session(
+    handler: Callable[[_T, _DT], Awaitable[_RT]],
+    event: _T,
+    data: _DT,
+) -> _RT:
+    session_factory: sessionmaker = data["session_factory"]
+    session: AsyncSession
+    async with session_factory() as session:
+        data["db"] = session
+        r = await handler(event, data)
+        await session.commit()
+    return r
+
+
+def setup(dp: Dispatcher) -> None:
+    dp.update.middleware(create_session)
