@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: spin_everyday_bot 2.0.0-alpha.0\n"
 "Report-Msgid-Bugs-To: evgfilim1@yandex.ru\n"
-"POT-Creation-Date: 2021-07-19 12:11+0500\n"
+"POT-Creation-Date: 2021-07-25 22:57+0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,34 +18,46 @@ msgstr ""
 "Generated-By: Babel 2.9.1\n"
 
 #: spin_everyday_bot/cli.py:42
+msgid "No such file: {0!r}"
+msgstr ""
+
+#: spin_everyday_bot/cli.py:44
+msgid "Is a directory: {0!r}"
+msgstr ""
+
+#: spin_everyday_bot/cli.py:50
 msgid "Telegram bot for everyday raffles"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:48
+#: spin_everyday_bot/cli.py:54
+msgid "Full path to config file"
+msgstr ""
+
+#: spin_everyday_bot/cli.py:58
 msgid "How to fetch updates, see https://core.telegram.org/bots/api#getting-updates"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:51
+#: spin_everyday_bot/cli.py:63
 msgid "Run with polling (default)"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:53
+#: spin_everyday_bot/cli.py:66
 msgid "Run with webhooks (not supported yet)"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:55
+#: spin_everyday_bot/cli.py:73
 msgid "Host to listen at"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:57
+#: spin_everyday_bot/cli.py:76
 msgid "Port to listen at"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:82
+#: spin_everyday_bot/cli.py:104
 msgid "Getting updates via webhook is not implemented yet"
 msgstr ""
 
-#: spin_everyday_bot/handlers/ping.py:38
+#: spin_everyday_bot/handlers/ping.py:36
 msgid ""
 "Pong!\n"
 "Answer time: {0:.2f}s\n"

@@ -10,6 +10,10 @@
 #  You should have received a copy of the GNU Affero General Public License along with this program.
 #  If not, see <http://www.gnu.org/licenses/>.
 
-__author__ = "evgfilim1"
-__version__ = "2.0.0-alpha.0"
-APP_NAME = "spin_everyday_bot"
+__all__ = ["dirs"]
+
+from platformdirs import PlatformDirs
+
+from . import APP_NAME, __author__
+
+dirs = PlatformDirs(APP_NAME, __author__, "2.x")

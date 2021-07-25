@@ -14,8 +14,9 @@ __all__ = ["main"]
 
 import asyncio
 import logging
-from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional, Sequence
 
 from aiogram import Bot, Dispatcher
@@ -33,14 +34,23 @@ class Args:
     strategy: str
     host: Optional[str] = None
     port: Optional[int] = None
+    config: Optional[Path] = None
+
+
+def _existing_file(path: str) -> Path:
+    if not (p := Path(path).resolve()).exists():
+        raise ArgumentTypeError(_("No such file: {0!r}").format(path))
+    if p.is_dir():
+        raise ArgumentTypeError(_("Is a directory: {0!r}").format(path))
+    return p
 
 
 def _init_parser() -> ArgumentParser:
     parser = ArgumentParser(
         description=_("Telegram bot for everyday raffles"),
-        formatter_class=ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("-V", "--version", action="version", version=__version__)
+    parser.add_argument("-c", "--config", type=_existing_file, help=_("Full path to config file"))
 
     run_type = parser.add_subparsers(
         help=_("How to fetch updates, see https://core.telegram.org/bots/api#getting-updates"),
@@ -67,7 +77,9 @@ def _parse_args(
 
 async def _main(args: Args, config: Config) -> None:
     engine = create_async_engine(config.db.dsn, future=True)
-    session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, future=True)()
+    session = sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False, future=True
+    )()
 
     bot = Bot(config.telegram.token, parse_mode="HTML")
     dp = Dispatcher()
@@ -76,13 +88,15 @@ async def _main(args: Args, config: Config) -> None:
     middlewares.register(dp)
 
     if args.strategy == "webhook":
-        raise NotImplementedError(_("Getting updates via webhook is not implemented yet"))
+        raise NotImplementedError(
+            _("Getting updates via webhook is not implemented yet")
+        )
     await dp.start_polling(bot, db=session)
 
 
 def main() -> None:
     args = _parse_args()
-    config = read_config()
+    config = read_config(args.config)
 
     logging.basicConfig(level=logging.DEBUG)
     return asyncio.run(_main(args, config))

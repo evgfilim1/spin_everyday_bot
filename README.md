@@ -13,7 +13,7 @@ Older versions might work, but not tested. If they do work, submit an issue.
 1. (Optional.) Create and set up new virtualenv for the project.
 1. Install requirements from [`requirements.txt`](requirements.txt) by running
    `pip install -Ur requirements.txt`.
-1. Create `config.yaml` in root project directory or in `~/.config/spin_everyday_bot/`.
+1. Create `config.yaml` in root project directory or in `~/.config/spin_everyday_bot/2.x/`.
 1. Open your `config.yaml` and edit it to match your setup.
    ```yaml
    telegram:

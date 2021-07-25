@@ -12,17 +12,23 @@
 
 __all__ = ["Config", "DatabaseConfig", "read_config", "TelegramConfig"]
 
-from os import getcwd, path
 from pathlib import Path
+from typing import Optional
 
-from pydantic import PostgresDsn, SecretStr
+from pydantic import AnyUrl, SecretStr
 from pydantic.dataclasses import dataclass
-from xdg import BaseDirectory
 from yaml import safe_load as yaml_load
 
-from . import APP_NAME
+from .misc import dirs
 
 CONFIG_FILE_NAME = "config.yaml"
+
+
+def _find_config() -> Optional[Path]:
+    for d in (Path.cwd(), dirs.user_config_path):
+        if (cfg_path := d / CONFIG_FILE_NAME).exists():
+            return cfg_path
+    raise FileNotFoundError(cfg_path)
 
 
 @dataclass(frozen=True)
@@ -40,9 +46,8 @@ class DatabaseConfig:
     database: str
 
     @property
-    def dsn(self) -> PostgresDsn:
-        return PostgresDsn(
-            None,
+    def dsn(self) -> str:
+        return AnyUrl.build(
             scheme="postgresql+asyncpg",
             user=self.user,
             password=self.password.get_secret_value(),
@@ -58,13 +63,9 @@ class Config:
     db: DatabaseConfig
 
 
-def read_config() -> Config:
+def read_config(path: Optional[Path] = None) -> Config:
     """Read config file and return a :class:`spin_everyday_bot.config.Config` object."""
-    config_file = Path(
-        BaseDirectory.load_first_config(APP_NAME, CONFIG_FILE_NAME)
-        or path.join(getcwd(), CONFIG_FILE_NAME)
-    )
-    if not config_file.exists():
-        raise FileNotFoundError("Configuration file not found")
-    with config_file.open() as f:
+    if path is None:
+        path = _find_config()
+    with path.open() as f:
         return Config(**yaml_load(f))
