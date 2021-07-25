@@ -12,9 +12,7 @@
 
 __all__ = ["router"]
 
-from datetime import datetime
-
-from aiogram import F, Router
+from aiogram import Router
 from aiogram.dispatcher.filters import CommandObject
 from aiogram.types import Message
 from sqlalchemy import update
