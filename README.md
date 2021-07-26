@@ -45,7 +45,7 @@ migrations and check whether your config matches (see _Setting up_ section for m
 Oh, you wanna contribute? That's nice!
 
 1. Make sure the project is set up and up-to-date.
-1. Install additional requirements from [`requirements-dev.txt`](requirements-dev.txt).
+1. Install additional requirements from [`dev-requirements.txt`](dev-requirements.txt).
 1. Make changes to the code.
    - If you made any changes to db, make sure you created a migration by running
      `alembic revision --autogenerate -m '<description>'` and verified it.
