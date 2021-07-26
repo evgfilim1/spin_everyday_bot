@@ -4,7 +4,7 @@
 [![Crowdin badge](https://badges.crowdin.net/spin_everyday_bot/localized.svg)](https://crowdin.com/project/spin_everyday_bot)
 [![Requirements badge](https://requires.io/github/evgfilim1/spin_everyday_bot/requirements.svg?branch=v2-dev)](https://requires.io/github/evgfilim1/spin_everyday_bot/requirements/?branch=v2-dev)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![License badge](https://img.shields.io/github/license/evgfilim1/spin_everyday_bot)
+[![License badge](https://img.shields.io/github/license/evgfilim1/spin_everyday_bot)](LICENSE)
 
 Telegram bot for everyday raffles. **HIGHLY EXPERIMENTAL! WORK IN PROGRESS!**
 
