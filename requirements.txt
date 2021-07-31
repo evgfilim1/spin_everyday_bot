@@ -1,9 +1,7 @@
---extra-index-url https://test.pypi.org/simple/
-# I'm risky, but this commit fixes a bug: https://github.com/aiogram/aiogram/issues/637
-git+https://github.com/aiogram/aiogram@8fe05ad2e8d1b60d9b7bbf8d0319c2b311a4fed2
+aiogram==3.0.0a12
 alembic~=1.6.5
 asyncpg~=0.23.0
 pydantic~=1.8.2
 PyYAML~=5.4.1
-platformdirs~=2.1.0
+platformdirs~=2.2.0
 sqlalchemy~=1.4.21
