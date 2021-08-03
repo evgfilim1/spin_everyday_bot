@@ -10,28 +10,35 @@
 #  You should have received a copy of the GNU Affero General Public License along with this program.
 #  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ["router"]
+__all__ = ["create_bot", "get_session_factory", "setup_dispatcher"]
 
-from datetime import datetime
+from aiogram import Bot, Dispatcher
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
 
-from aiogram import Router
-from aiogram.types import Message
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from ..db.models import User
-from ..lang import Translation
-
-router = Router()
+from . import handlers, middlewares
 
 
-@router.message(commands=["ping"])
-async def ping(message: Message, db: AsyncSession, tr: Translation):
-    _ = tr.gettext
-    ping_time = (datetime.utcnow() - message.date.replace(tzinfo=None)).total_seconds()
-    db_ping_t = datetime.utcnow()
-    await db.execute(select(User).where(User.id == 1))
-    db_ping = (datetime.utcnow() - db_ping_t).total_seconds()
-    return message.reply(
-        _("Pong!\nAnswer time: {0:.2f}s\nDatabase ping: {1:.2f}s").format(ping_time, db_ping)
+def create_bot(token: str) -> Bot:
+    return Bot(token, parse_mode="HTML")
+
+
+def get_session_factory(dsn: str) -> sessionmaker:
+    engine = create_async_engine(dsn, future=True)
+    session_factory = sessionmaker(
+        engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        future=True,
     )
+
+    return session_factory
+
+
+def setup_dispatcher() -> Dispatcher:
+    dp = Dispatcher()
+
+    handlers.register(dp)
+    middlewares.register(dp)
+
+    return dp

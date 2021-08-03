@@ -29,19 +29,17 @@ router = Router()
 async def reset(message: Message, db: AsyncSession, tr: Translation, command: CommandObject):
     _ = tr.gettext
     if not command.args:
-        await message.reply(_("No chat ID specified"))
-        return
+        return message.reply(_("No chat ID specified"))
     try:
         chat_id = int(command.args.strip())
     except ValueError:
-        await message.reply(_("Invalid chat ID specified"))
-        return
+        return message.reply(_("Invalid chat ID specified"))
     await db.execute(update(models.Chat).where(models.Chat.id == chat_id).values(winner_id=None))
-    await message.reply(_("Raffle result was reset in chat {0}").format(chat_id))
+    return message.reply(_("Raffle result was reset in chat {0}").format(chat_id))
 
 
 # If you want to notify user when they don't have permission on "/sudo", uncomment this.
 # @router.message(commands=["sudo"])
 # async def fallback(message: Message, tr: Translation):
 #     _ = tr.gettext
-#     await message.reply(_("You don't have permission to execute this."))
+#     return message.reply(_("You don't have permission to execute this."))

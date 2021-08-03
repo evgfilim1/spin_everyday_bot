@@ -19,7 +19,7 @@ Older versions might work, but not tested. If they do work, submit an issue.
 1. (Optional.) Create and set up new virtualenv for the project.
 1. Install requirements from [`requirements.txt`](requirements.txt) by running
    `pip install -Ur requirements.txt`.
-1. Create `config.yaml` in root project directory or in `~/.config/spin_everyday_bot/2.x/`.
+1. Create `config.yaml` in current directory or in `~/.config/spin_everyday_bot/2.x/`.
 1. Open your `config.yaml` and edit it to match your setup.
    ```yaml
    telegram:
@@ -35,7 +35,20 @@ Older versions might work, but not tested. If they do work, submit an issue.
 1. Migrate database by running `alembic upgrade head`
 
 ## Running
+### Polling
 It's as easy as `python -m spin_everyday_bot`
+
+### Webhooks
+1. Make sure you've got HTTPS certificate. 
+   Please note that **self-signed ones are not yet supported**, go and create one with 
+   [Let's Encrypt](https://letsencrypt.org/getting-started/).
+   If you don't have a domain name, but you have static IP, use [nip.io](https://nip.io) to create 
+   "fake" domain.
+1. Set up a reverse-proxy like [nginx](https://nginx.org) with above certificate and pointing
+   to `http://localhost:8880/`.
+1. Install additional requirements: `pip install -U "FastAPI~=0.68.0" uvicorn`.
+1. Run `python -m spin_everyday_bot webhook -u "<WEBHOOK_URL>"`, where `<WEBHOOK_URL>` is the URL
+   for Telegram to make requests to.
 
 ### Updating
 Before you run a new version after updating, make sure your database is up-to-date by running

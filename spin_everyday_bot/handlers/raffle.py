@@ -113,7 +113,7 @@ async def show_winner(
     raffle = chat.raffle_name or _(DEFAULT_RAFFLE_NAME)
     winner: models.User = chat.winner
     tag = tag_user(winner)
-    await message.reply(
+    return message.reply(
         _("According to today raffle, <b>{name} of the day</b> is {user}.").format(
             name=raffle, user=tag
         )
@@ -137,8 +137,7 @@ async def start_raffle(
         winner = await _random_member_from_chat(r.all(), message.chat.id, bot, db)
     except ValueError:
         # no users left
-        await message.reply(_("No users are registered in the raffle :("))
-        return
+        return message.reply(_("No users are registered in the raffle :("))
     await db.execute(
         update(models.Chat).where(models.Chat.id == chat.id).values(winner_id=winner.user_id)
     )
@@ -147,8 +146,7 @@ async def start_raffle(
     )
     tag = tag_user(winner.user)
     if full_chat.slow_mode_delay or chat.fast is not False:  # fast raffles by default
-        await message.answer(_(texts[-1]).format(name=raffle, user=tag))
-    else:
-        create_task(
-            _sender_task((_(text).format(name=raffle, user=tag) for text in texts), message.answer)
-        )
+        return message.answer(_(texts[-1]).format(name=raffle, user=tag))
+    create_task(
+        _sender_task((_(text).format(name=raffle, user=tag) for text in texts), message.answer)
+    )

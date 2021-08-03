@@ -12,21 +12,15 @@
 
 __all__ = ["main"]
 
-import asyncio
 import logging
 from argparse import ArgumentParser, ArgumentTypeError
 from dataclasses import dataclass
-from ipaddress import IPv4Address, IPv6Address
 from pathlib import Path
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence
 
-from aiogram import Bot, Dispatcher
-from pydantic import IPvAnyAddress
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
-
-from . import __version__, handlers, middlewares
-from .config import Config, read_config
+from . import __version__
+from .common import create_bot, get_session_factory
+from .config import read_config
 from .lang import gettext as _
 
 
@@ -37,6 +31,8 @@ class Args:
     config: Optional[Path]
     host: Optional[str] = None
     port: Optional[int] = None
+    webhook_url: Optional[str] = None
+    shutdown_remove: bool = False
 
 
 def _existing_file(path: str) -> Path:
@@ -69,54 +65,50 @@ def _init_parser() -> ArgumentParser:
     )
     run_type.add_parser("polling", help=_("run with polling (default)"))
 
-    webhook = run_type.add_parser("webhook", help=_("run with webhooks (not supported yet)"))
+    webhook = run_type.add_parser("webhook", help=_("run with webhooks"))
+    webhook.add_argument("-H", "--host", default="localhost", help=_("host to listen at"))
+    webhook.add_argument("-p", "--port", type=int, default=8880, help=_("port to listen at"))
+    webhook.add_argument("-u", "--webhook-url", help=_("url for Telegram to make requests to"))
     webhook.add_argument(
-        "-H",
-        "--host",
-        type=IPvAnyAddress,
-        default="127.0.0.1",
-        help=_("host to listen at"),
+        "--shutdown-remove", action="store_true", help=_("remove webhook on app shutdown")
     )
-    webhook.add_argument("--port", "-p", type=int, default=8880, help=_("port to listen at"))
 
     return parser
 
 
-def _parse_args(
-    argv: Optional[Sequence[str]] = None,
-) -> Args:
+def _parse_args(argv: Optional[Sequence[str]] = None) -> Args:
     parser = _init_parser()
     args = parser.parse_args(argv)
     return Args(**args.__dict__)
-
-
-async def _main(args: Args, config: Config) -> None:
-    engine = create_async_engine(config.db.dsn, future=True)
-    session_factory = sessionmaker(
-        engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-        future=True,
-    )
-
-    bot = Bot(config.telegram.token, parse_mode="HTML")
-    dp = Dispatcher()
-
-    handlers.register(dp)
-    middlewares.register(dp)
-
-    if args.strategy == "webhook":
-        raise NotImplementedError(_("Getting updates via webhook is not implemented yet"))
-    await dp.start_polling(
-        bot,
-        session_factory=session_factory,
-        superuser_id=config.telegram.superuser_id,
-    )
 
 
 def main() -> None:
     args = _parse_args()
     config = read_config(args.config)
 
-    logging.basicConfig(level=args.loglevel)
-    return asyncio.run(_main(args, config))
+    bot = create_bot(config.telegram.token)
+    kwargs = dict(
+        session_factory=get_session_factory(config.db.dsn),
+        superuser_id=config.telegram.superuser_id,
+    )
+    if args.strategy == "webhook":
+        try:
+            from .webhook import start_webhook
+        except ImportError as e:
+            raise ImportError("Make sure 'uvicorn' and 'FastAPI' are installed") from e
+
+        start_webhook(
+            bot,
+            args.host,
+            args.port,
+            args.webhook_url,
+            args.shutdown_remove,
+            **kwargs,
+        )
+    elif args.strategy == "polling":
+        from .polling import start_polling
+
+        logging.basicConfig(level=args.loglevel)
+        start_polling(bot, **kwargs)
+    else:
+        raise AssertionError

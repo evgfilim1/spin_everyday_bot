@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: spin_everyday_bot 2.0.0-alpha.0\n"
 "Report-Msgid-Bugs-To: evgfilim1@yandex.ru\n"
-"POT-Creation-Date: 2021-08-03 16:56+0500\n"
+"POT-Creation-Date: 2021-08-03 19:39+0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,48 +17,52 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.9.1\n"
 
-#: spin_everyday_bot/cli.py:44
+#: spin_everyday_bot/cli.py:40
 msgid "No such file: {0!r}"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:46
+#: spin_everyday_bot/cli.py:42
 msgid "Is a directory: {0!r}"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:53
+#: spin_everyday_bot/cli.py:49
 msgid "Telegram bot for everyday raffles"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:61
+#: spin_everyday_bot/cli.py:57
 msgid "log level, can be one of {0}"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:64
+#: spin_everyday_bot/cli.py:60
 msgid "full path to config file"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:67
+#: spin_everyday_bot/cli.py:63
 msgid "How to fetch updates, see https://core.telegram.org/bots/api#getting-updates"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:70
+#: spin_everyday_bot/cli.py:66
 msgid "run with polling (default)"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:72
-msgid "run with webhooks (not supported yet)"
+#: spin_everyday_bot/cli.py:68
+msgid "run with webhooks"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:78
+#: spin_everyday_bot/cli.py:69
 msgid "host to listen at"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:80
+#: spin_everyday_bot/cli.py:70
 msgid "port to listen at"
 msgstr ""
 
-#: spin_everyday_bot/cli.py:109
-msgid "Getting updates via webhook is not implemented yet"
+#: spin_everyday_bot/cli.py:71
+msgid "url for Telegram to make requests to"
+msgstr ""
+
+#: spin_everyday_bot/cli.py:73
+msgid "remove webhook on app shutdown"
 msgstr ""
 
 #: spin_everyday_bot/misc.py:30
@@ -127,11 +131,11 @@ msgstr ""
 msgid "No chat ID specified"
 msgstr ""
 
-#: spin_everyday_bot/handlers/superuser.py:37
+#: spin_everyday_bot/handlers/superuser.py:36
 msgid "Invalid chat ID specified"
 msgstr ""
 
-#: spin_everyday_bot/handlers/superuser.py:40
+#: spin_everyday_bot/handlers/superuser.py:38
 msgid "Raffle result was reset in chat {0}"
 msgstr ""
 

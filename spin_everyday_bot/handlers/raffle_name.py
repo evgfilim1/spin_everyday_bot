@@ -62,7 +62,7 @@ async def get_raffle_name(
 ):
     _ = tr.gettext
     raffle_name = chat.raffle_name or _(DEFAULT_RAFFLE_NAME)
-    await message.reply(
+    return message.reply(
         _(
             "Current raffle name: <i>{0}</i>.\n\n"
             "To change raffle name, send <code>/{1} &lt;new_name&gt;</code>."
@@ -73,4 +73,4 @@ async def get_raffle_name(
 @router.message(content_types=["text"], commands=["setname"])
 async def fallback(message: Message, tr: Translation):
     _ = tr.gettext
-    await message.reply(_(ONLY_GROUPS))
+    return message.reply(_(ONLY_GROUPS))
