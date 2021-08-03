@@ -16,8 +16,9 @@ import asyncio
 import logging
 from argparse import ArgumentParser, ArgumentTypeError
 from dataclasses import dataclass
+from ipaddress import IPv4Address, IPv6Address
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union
 
 from aiogram import Bot, Dispatcher
 from pydantic import IPvAnyAddress
@@ -29,12 +30,13 @@ from .config import Config, read_config
 from .lang import gettext as _
 
 
-@dataclass()
+@dataclass(frozen=True)
 class Args:
     strategy: str
+    loglevel: str
+    config: Optional[Path]
     host: Optional[str] = None
     port: Optional[int] = None
-    config: Optional[Path] = None
 
 
 def _existing_file(path: str) -> Path:
@@ -46,23 +48,36 @@ def _existing_file(path: str) -> Path:
 
 
 def _init_parser() -> ArgumentParser:
+    loglevels = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
     parser = ArgumentParser(
         description=_("Telegram bot for everyday raffles"),
     )
+    parser.add_argument(
+        "-L",
+        "--loglevel",
+        default="INFO",
+        choices=loglevels,
+        metavar="LEVEL",
+        help=_("log level, can be one of {0}").format(", ".join(loglevels)),
+    )
     parser.add_argument("-V", "--version", action="version", version=__version__)
-    parser.add_argument("-c", "--config", type=_existing_file, help=_("Full path to config file"))
+    parser.add_argument("-c", "--config", type=_existing_file, help=_("full path to config file"))
 
     run_type = parser.add_subparsers(
         help=_("How to fetch updates, see https://core.telegram.org/bots/api#getting-updates"),
         dest="strategy",
     )
-    run_type.add_parser("polling", help=_("Run with polling (default)"))
+    run_type.add_parser("polling", help=_("run with polling (default)"))
 
-    webhook = run_type.add_parser("webhook", help=_("Run with webhooks (not supported yet)"))
+    webhook = run_type.add_parser("webhook", help=_("run with webhooks (not supported yet)"))
     webhook.add_argument(
-        "-H", "--host", type=IPvAnyAddress, default="127.0.0.1", help=_("Host to listen at")
+        "-H",
+        "--host",
+        type=IPvAnyAddress,
+        default="127.0.0.1",
+        help=_("host to listen at"),
     )
-    webhook.add_argument("--port", "-p", type=int, default=8880, help=_("Port to listen at"))
+    webhook.add_argument("--port", "-p", type=int, default=8880, help=_("port to listen at"))
 
     return parser
 
@@ -103,5 +118,5 @@ def main() -> None:
     args = _parse_args()
     config = read_config(args.config)
 
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=args.loglevel)
     return asyncio.run(_main(args, config))
