@@ -12,45 +12,63 @@
 
 __all__ = ["start_webhook"]
 
-from functools import partial
+from functools import wraps
+from inspect import iscoroutine
 from typing import Any
 
 from aiogram import Bot, Dispatcher
 from aiogram.types import Update
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
 from uvicorn import run
 
 from .common import setup_dispatcher
 
-# Don't run the app directly with uvicorn CLI!
-_app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None, include_in_schema=False)
+
+async def handle_update(request: Request, update: Update) -> Response:
+    dp: Dispatcher = request.app.state.dp
+    bot: Bot = request.app.state.bot
+    kwargs: dict[str, Any] = request.app.state.kwargs
+    r = await dp.feed_webhook_update(bot, update, **kwargs)
+    if r is None:
+        return Response()
+    return JSONResponse(r)
 
 
-async def startup(bot: Bot, webhook_url: str):
-    await bot.set_webhook(webhook_url)
+def async_partial(func, *args, **kwargs):
+    @wraps(func)
+    async def wrapper(*a, **kw):
+        r = func(*args, *a, **kwargs, **kw)
+        if iscoroutine(r):
+            r = await r
+        return r
 
-
-async def shutdown(bot: Bot):
-    await bot.delete_webhook()
-
-
-async def handle_update(update: Update, bot: Bot, dp: Dispatcher, **kwargs: Any) -> dict:
-    return await dp.feed_webhook_update(bot, update, **kwargs)
+    return wrapper
 
 
 def start_webhook(
     bot: Bot,
     host: str,
     port: int,
-    webhook_url: str,
-    shutdown_remove: bool,
+    loglevel: str,
     **kwargs: Any,
 ):
-    _app.add_api_route(
-        "/", partial(handle_update, bot=bot, dp=setup_dispatcher(), **kwargs), methods=["POST"]
-    )
-    _app.add_event_handler("startup", partial(startup, bot=bot, webhook_url=webhook_url))
-    if shutdown_remove:
-        _app.add_event_handler("shutdown", partial(shutdown, bot=bot))
+    dp = setup_dispatcher()
+    app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None, include_in_schema=False)
+    app.add_api_route("/", handle_update, methods=["POST"])
 
-    run("spin_everyday_bot.webhook:_app", host=host, port=port)
+    local_kwargs = {
+        "dispatcher": dp,
+        "bots": (bot,),
+        "bot": bot,
+        **kwargs,
+    }
+
+    app.add_event_handler("startup", async_partial(dp.emit_startup, **local_kwargs))
+    app.add_event_handler("shutdown", async_partial(dp.emit_shutdown, **local_kwargs))
+
+    app.state.dp = dp
+    app.state.bot = bot
+    app.state.kwargs = kwargs
+
+    run(app, host=host, port=port, log_level=loglevel)

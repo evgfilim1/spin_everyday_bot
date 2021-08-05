@@ -10,14 +10,19 @@
 #  You should have received a copy of the GNU Affero General Public License along with this program.
 #  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ["register"]
+__all__ = ["router"]
 
-from aiogram import Router
+from aiogram import Bot, Router
 
-from . import lifecycle, ping, raffle, raffle_name, superuser
+router = Router()
 
 
-def register(root: Router) -> Router:
-    for m in (lifecycle, ping, raffle, raffle_name, superuser):
-        root.include_router(m.router)
-    return root
+@router.startup()
+async def startup(bot: Bot, webhook_url: str):
+    await bot.set_webhook(webhook_url)
+
+
+@router.shutdown()
+async def shutdown(bot: Bot, remove_webhook: bool):
+    if remove_webhook:
+        await bot.delete_webhook()

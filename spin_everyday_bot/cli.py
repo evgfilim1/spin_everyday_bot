@@ -15,6 +15,7 @@ __all__ = ["main"]
 import logging
 from argparse import ArgumentParser, ArgumentTypeError
 from dataclasses import dataclass
+from inspect import getfullargspec
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -26,12 +27,12 @@ from .lang import gettext as _
 
 @dataclass(frozen=True)
 class Args:
-    strategy: str
+    strategy: Optional[str]
     loglevel: str
     config: Optional[Path]
     host: Optional[str] = None
     port: Optional[int] = None
-    webhook_url: Optional[str] = None
+    webhook_url: str = ""
     shutdown_remove: bool = False
 
 
@@ -44,7 +45,7 @@ def _existing_file(path: str) -> Path:
 
 
 def _init_parser() -> ArgumentParser:
-    loglevels = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
+    loglevels = ("debug", "info", "warning", "error", "critical")
     parser = ArgumentParser(
         description=_("Telegram bot for everyday raffles"),
     )
@@ -79,7 +80,19 @@ def _init_parser() -> ArgumentParser:
 def _parse_args(argv: Optional[Sequence[str]] = None) -> Args:
     parser = _init_parser()
     args = parser.parse_args(argv)
-    return Args(**args.__dict__)
+
+    spec = getfullargspec(Args)
+    params = {}
+    for k, v in args.__dict__.items():
+        if k not in spec.args:
+            raise TypeError(f"{Args!r} doesn't accept {k!r} param")
+        current_type = spec.annotations.get(k)
+        is_optional = type(None) in getattr(current_type, "__args__", ())
+        if v is None and not is_optional:
+            continue
+        params[k] = v
+
+    return Args(**params)
 
 
 def main() -> None:
@@ -90,6 +103,8 @@ def main() -> None:
     kwargs = dict(
         session_factory=get_session_factory(config.db.dsn),
         superuser_id=config.telegram.superuser_id,
+        webhook_url=args.webhook_url,
+        remove_webhook=args.shutdown_remove,
     )
     if args.strategy == "webhook":
         try:
@@ -101,14 +116,13 @@ def main() -> None:
             bot,
             args.host,
             args.port,
-            args.webhook_url,
-            args.shutdown_remove,
+            args.loglevel,
             **kwargs,
         )
-    elif args.strategy == "polling":
+    elif args.strategy == "polling" or args.strategy is None:
         from .polling import start_polling
 
-        logging.basicConfig(level=args.loglevel)
+        logging.basicConfig(level=args.loglevel.upper())
         start_polling(bot, **kwargs)
     else:
         raise AssertionError
