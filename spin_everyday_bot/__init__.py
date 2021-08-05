@@ -10,6 +10,7 @@
 #  You should have received a copy of the GNU Affero General Public License along with this program.
 #  If not, see <http://www.gnu.org/licenses/>.
 
+__all__ = ["__author__", "__version__", "APP_NAME"]
 __author__ = "evgfilim1"
 __version__ = "2.0.0-alpha.0"
 APP_NAME = "spin_everyday_bot"

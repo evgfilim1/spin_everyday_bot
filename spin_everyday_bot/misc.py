@@ -30,3 +30,5 @@ _ = NullTranslations().gettext  # stub, constants in the file will be translated
 ONLY_GROUPS = _("This command will work only in group chats.")
 DEFAULT_RAFFLE_NAME = _("winner")
 # endregion
+
+del _
